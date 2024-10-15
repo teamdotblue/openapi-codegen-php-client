@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit\Endpoint;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint;
 
-use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
+use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
 
 class TestData implements JsonSchemaAwareRecord
 {

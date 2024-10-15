@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Client;
+namespace TeamBlue\OpenApi\Codegen\Client;
 
-use ADS\OpenApi\Codegen\Endpoint\Endpoint;
-use ADS\Util\ArrayUtil;
 use Closure;
 use EventEngine\Data\ImmutableRecord;
 use RuntimeException;
+use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
+use TeamBlue\Util\ArrayUtil;
 
 use function array_key_exists;
 use function array_map;

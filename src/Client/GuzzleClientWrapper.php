@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Client;
+namespace TeamBlue\OpenApi\Codegen\Client;
 
 use GuzzleHttp\ClientInterface;
 use Psr\Http\Message\ResponseInterface;

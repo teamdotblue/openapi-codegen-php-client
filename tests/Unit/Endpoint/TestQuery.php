@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit\Endpoint;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint;
 
-use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
-use ADS\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
+use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
+use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
 
 class TestQuery implements JsonSchemaAwareRecord, SpecialKeySupport
 {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace {{invokerPackage}};
 
-use ADS\ClientMock\Mock;
-use ADS\ClientMock\MockLogic;{{#models}}{{#model}}
+use TeamBlue\ClientMock\Mock;
+use TeamBlue\ClientMock\MockLogic;{{#models}}{{#model}}
 use {{importPath}};{{/model}}{{/models}}
 
 final class Api{{clientClass}}Mock implements Mock

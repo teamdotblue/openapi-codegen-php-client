@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Client;
+namespace TeamBlue\OpenApi\Codegen\Client;
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;

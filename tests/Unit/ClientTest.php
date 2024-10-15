@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit;
 
-use ADS\OpenApi\Codegen\Client\NullClientWrapper;
-use ADS\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
-use ADS\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
 use PHPUnit\Framework\TestCase;
+use TeamBlue\OpenApi\Codegen\Client\NullClientWrapper;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
 
 class ClientTest extends TestCase
 {

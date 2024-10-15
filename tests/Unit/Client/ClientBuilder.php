@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit\Client;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
-use ADS\ClientMock\Mock;
-use ADS\ClientMock\MockPersister;
+use TeamBlue\ClientMock\Mock;
+use TeamBlue\ClientMock\MockPersister;
 use Unit\Client\ClientMock;
 
-class ClientBuilder extends \ADS\OpenApi\Codegen\ClientBuilder\ClientBuilder
+class ClientBuilder extends \TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilder
 {
     public function build(): Client
     {

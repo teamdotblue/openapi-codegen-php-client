@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Unit\Client;
 
-use ADS\ClientMock\Mock;
-use ADS\ClientMock\MockLogic;
+use TeamBlue\ClientMock\Mock;
+use TeamBlue\ClientMock\MockLogic;
 
 class ClientMock implements Mock
 {

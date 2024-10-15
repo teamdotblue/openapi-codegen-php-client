@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit\Client;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
-use ADS\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
-use ADS\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithArrayBody;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithArrayBody;
 
-class Client extends \ADS\OpenApi\Codegen\Client\Client
+class Client extends \TeamBlue\OpenApi\Codegen\Client\Client
 {
     public function test(): mixed
     {

@@ -1,7 +1,6 @@
 {
-    "name" : "arnedesmedt/openapi-codegen-php-client",
+    "name" : "team-blue/java-openapi-codegen-php-client",
     "description" : "A library to create a PHP Client based on an OpenApi spec.",
-    "homepage": "https://github.com/arnedesmedt/openapi-codegen-php-client",
     "keywords" : [
         "openapi",
         "generator",
@@ -11,13 +10,12 @@
     "type" : "library",
     "require" : {
         "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
-        "arnedesmedt/client-mock": "~0.1",
-        "arnedesmedt/php-util": "~0.1",
         "guzzlehttp/guzzle": "~7.0",
-        "symfony/http-client-contracts": "~3.0"
+        "symfony/http-client-contracts": "~3.0",
+        "team-blue/php-client-mock": "^0.3.0",
+        "team-blue/php-util": "^0.4.4"
     },
     "require-dev" : {
-        "arnedesmedt/json-immutable-objects": "~0.1",
         "doctrine/coding-standard": "~11.0",
         "icanhazstring/composer-unused": "~0.1",
         "phpmd/phpmd": "~2.0",
@@ -25,16 +23,23 @@
         "phpstan/phpstan": "~1.0",
         "phpunit/phpunit": "~9.0",
         "rector/rector": "~0.1",
-        "squizlabs/php_codesniffer": "~3.0"
+        "squizlabs/php_codesniffer": "~3.0",
+        "team-blue/php-json-immutable-objects": "^0.5.6"
+    },
+    "repositories": {
+        "packeton.teamblue-ops.net": {
+            "type": "composer",
+            "url": "https://packeton.teamblue-ops.net"
+        }
     },
     "autoload" : {
         "psr-4" : {
-            "ADS\\OpenApi\\Codegen\\" : "src/"
+            "TeamBlue\\OpenApi\\Codegen\\" : "src/"
         }
     },
     "autoload-dev" : {
         "psr-4" : {
-            "ADS\\OpenApi\\Codegen\\Tests\\" : "tests/"
+            "TeamBlue\\OpenApi\\Codegen\\Tests\\" : "tests/"
         }
     },
     "minimum-stability": "dev",

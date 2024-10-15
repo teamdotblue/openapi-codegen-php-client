@@ -7,10 +7,10 @@ namespace {{modelPackage}};
 {{#model}}
 use {{invokerPackage}}\Default\{{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}}Default;
 {{#discriminator}}
-use ADS\JsonImmutableObjects\Polymorphism\Discriminator;
-use ADS\JsonImmutableObjects\Polymorphism\DiscriminatorLogic;{{/discriminator}}{{^discriminator}}
-use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
-use ADS\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
+use TeamBlue\JsonImmutableObjects\Polymorphism\Discriminator;
+use TeamBlue\JsonImmutableObjects\Polymorphism\DiscriminatorLogic;{{/discriminator}}{{^discriminator}}
+use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
+use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;{{/discriminator}}
 

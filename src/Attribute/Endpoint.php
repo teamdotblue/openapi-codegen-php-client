@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Attribute;
+namespace TeamBlue\OpenApi\Codegen\Attribute;
 
 use Attribute;
 

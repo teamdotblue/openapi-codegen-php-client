@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace {{invokerPackage}};
 
-use ADS\ValueObjects\ValueObject;
+use TeamBlue\ValueObjects\ValueObject;
 {{#models}}{{#model}}use {{importPath}};
-{{/model}}{{/models}}use ADS\OpenApi\Codegen\Attribute\Endpoint as EndpointAttribute;
-use ADS\OpenApi\Codegen\Client\Client as AbstractClient;
+{{/model}}{{/models}}use TeamBlue\OpenApi\Codegen\Attribute\Endpoint as EndpointAttribute;
+use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
 
 /**
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)

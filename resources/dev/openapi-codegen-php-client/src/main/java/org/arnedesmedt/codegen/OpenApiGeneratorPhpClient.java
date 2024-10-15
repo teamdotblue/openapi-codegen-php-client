@@ -49,9 +49,9 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     cliOptions.add(new CliOption(COPYRIGHT, "Copyright"));
     cliOptions.add(new CliOption(CLIENT_CLASS, "Client file"));
 
-    typeMapping.put("date", "\\ADS\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
-    typeMapping.put("Date", "\\ADS\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
-    typeMapping.put("DateTime", "\\ADS\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("Date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("DateTime", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
     typeMapping.put("set", "array");
     typeMapping.put("object", "array");
 

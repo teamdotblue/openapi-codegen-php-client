@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit\Endpoint;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint;
 
-use ADS\OpenApi\Codegen\Endpoint\Endpoint;
-use ADS\OpenApi\Codegen\Endpoint\EndpointLogic;
+use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
+use TeamBlue\OpenApi\Codegen\Endpoint\EndpointLogic;
 
 class TestEndpoint implements Endpoint
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Tests\Unit;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit;
 
-use ADS\OpenApi\Codegen\Endpoint\Endpoint;
-use ADS\OpenApi\Codegen\Tests\Unit\Endpoint\TestData;
-use ADS\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
 use PHPUnit\Framework\TestCase;
+use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestData;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
 
 class EndpointTest extends TestCase
 {

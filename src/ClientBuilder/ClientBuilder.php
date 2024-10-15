@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\ClientBuilder;
+namespace TeamBlue\OpenApi\Codegen\ClientBuilder;
 
-use ADS\ClientMock\Mock;
-use ADS\OpenApi\Codegen\Client\Client;
-use ADS\OpenApi\Codegen\Client\ClientWrapper;
-use ADS\OpenApi\Codegen\Client\GuzzleClientWrapper;
-use ADS\OpenApi\Codegen\Client\SymfonyClientWrapper;
 use GuzzleHttp\Client as GuzzleClient;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface as SymfonyClient;
+use TeamBlue\ClientMock\Mock;
+use TeamBlue\OpenApi\Codegen\Client\Client;
+use TeamBlue\OpenApi\Codegen\Client\ClientWrapper;
+use TeamBlue\OpenApi\Codegen\Client\GuzzleClientWrapper;
+use TeamBlue\OpenApi\Codegen\Client\SymfonyClientWrapper;
 
 use function file_exists;
 use function file_get_contents;

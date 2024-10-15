@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ADS\OpenApi\Codegen\Endpoint;
+namespace TeamBlue\OpenApi\Codegen\Endpoint;
 
 use EventEngine\Data\ImmutableRecord;
 
