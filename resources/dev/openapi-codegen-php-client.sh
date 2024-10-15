@@ -13,7 +13,7 @@ case "$(uname -s)" in
 esac
 
 generatordir=$(cd $(dirname $argv0) > /dev/null && cd $generatordir > /dev/null && pwd)
-generatorimage=arnedesmedt/openapi-codegen-php-client
+generatorimage=team-blue/java-openapi-codegen-php-client
 rootdir=`cd $(dirname $argv0)/../../../../../; pwd`
 
 cd "${generatordir}" && DOCKER_BUILDKIT=1 docker build --target runner -t ${generatorimage} openapi-codegen-php-client
