@@ -12,8 +12,8 @@
         "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
         "guzzlehttp/guzzle": "~7.0",
         "symfony/http-client-contracts": "~3.0",
-        "team-blue/php-client-mock": "^0.3.0",
-        "team-blue/php-util": "^0.4.4"
+        "team-blue/php-client-mock": "^1.0",
+        "team-blue/php-util": "^1.0"
     },
     "require-dev" : {
         "doctrine/coding-standard": "~11.0",
@@ -24,7 +24,7 @@
         "phpunit/phpunit": "~9.0",
         "rector/rector": "~0.1",
         "squizlabs/php_codesniffer": "~3.0",
-        "team-blue/php-json-immutable-objects": "^0.5.6"
+        "team-blue/php-json-immutable-objects": "^1.0"
     },
     "repositories": {
         "packeton.teamblue-ops.net": {

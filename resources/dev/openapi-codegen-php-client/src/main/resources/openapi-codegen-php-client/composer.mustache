@@ -12,11 +12,11 @@
     "require": {
         "php": "^8.1 || ^8.2",{{#additionalPackages}}
         "{{name}}": "{{version}}",{{/additionalPackages}}
-        "team-blue/java-openapi-codegen-php-client": "~1.0",
-        "team-blue/php-json-immutable-objects": "~0.1"
+        "team-blue/java-openapi-codegen-php-client": "^2.0",
+        "team-blue/php-json-immutable-objects": "^1.0"
     },
     "require-dev": {
-        "team-blue/php-client-mock": "~0.1",
+        "team-blue/php-client-mock": "^1.0",
         "combell/platforms-php-coding-standard": "~1.0",
         "phpmd/phpmd": "~2.0",
         "phpro/grumphp": "~1.0",
@@ -28,10 +28,6 @@
          "packeton.teamblue-ops.net": {
             "type": "composer",
             "url": "https://packeton.teamblue-ops.net"
-        },
-        "combell": {
-            "type": "composer",
-            "url": "https://git.combell-ops.net/api/v4/group/186/-/packages/composer/packages.json"
         }
     },
     "autoload": {
