@@ -29,11 +29,13 @@ import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.openapitools.codegen.languages.PhpClientCodegen;
+import org.openapitools.codegen.templating.mustache.EscapeChar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+import com.google.common.collect.ImmutableMap;
+import com.samskivert.mustache.Mustache.Lambda;
 
 public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements CodegenConfig {
   public static final String GENERATOR_NAME         = "openapi-codegen-php-client";
@@ -531,7 +533,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   @Override
   public String toDefaultValue(Schema schema) {
     if (! ModelUtils.isArraySchema(schema) || schema.getDefault() == null) {
-      return super.toDefaultValue(schema);
+      return escape(super.toDefaultValue(schema));
     }
 
     ArraySchema arraySchema = (ArraySchema) schema;
@@ -540,5 +542,11 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
 
     return arraySchema.getDefault().toString();
+  }
+
+  @Override
+  protected ImmutableMap.Builder<String, Lambda> addMustacheLambdas() {
+      return super.addMustacheLambdas()
+              .put("escapeQuote", new EscapeChar("(?<=.)(?<!\\\\)\\'(?=.)", "\\\\\\'"));
   }
 }
