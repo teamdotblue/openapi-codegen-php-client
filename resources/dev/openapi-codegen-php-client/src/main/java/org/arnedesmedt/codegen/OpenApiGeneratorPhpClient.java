@@ -533,7 +533,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   @Override
   public String toDefaultValue(Schema schema) {
     if (! ModelUtils.isArraySchema(schema) || schema.getDefault() == null) {
-      return escape(super.toDefaultValue(schema));
+      return super.toDefaultValue(schema);
     }
 
     ArraySchema arraySchema = (ArraySchema) schema;
