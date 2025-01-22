@@ -17,9 +17,9 @@ use {{invokerPackage}}\Model\{{operationIdCamelCase}}Query;
 {{#bodyParams.0}}
 use {{invokerPackage}}\Model\{{bodyParams.0.baseType}};
 {{/bodyParams.0}}
-{{#formParams.0}}
+{{#formParams.0}}{{#formParams.0.isFormParam}}
 use {{invokerPackage}}\Model\{{formParams.0.baseType}};
-{{/formParams.0}}
+{{/formParams.0.isFormParam}}{{/formParams.0}}
 {{/operation}}
 {{/operations}}
 
@@ -36,8 +36,8 @@ class {{classname}} implements Endpoint, SpecialKeySupport
     private ${{paramName}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}{{#isNullable}} = null{{/isNullable}}{{^required}}{{^isNullable}} = null{{/isNullable}}{{/required}}{{/defaultValue}};{{/pathParams}}{{#queryParams.0}}
     private {{operationIdCamelCase}}Query|null $query = null;{{/queryParams.0}}{{#bodyParams.0}}
     /** @var {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}<{{bodyParams.0.baseType}}>{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{#bodyParams.0.isMap}}<mixed>{{/bodyParams.0.isMap}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body */
-    private {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}};{{/bodyParams.0}}{{#formParams.0}}
-    private {{formParams.0.baseType}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}};{{/formParams.0}}{{#pathParams}}
+    private {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}};{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}
+    private {{formParams.0.baseType}}{{{.}}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}};{{/formParams.0.isFormParam}}{{/formParams.0}}{{#pathParams}}
 
     /** @return {{dataType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} */
     public function {{paramName}}()
@@ -51,8 +51,8 @@ class {{classname}} implements Endpoint, SpecialKeySupport
         return [{{#pathParams}}
             '{{baseName}}' => $this->{{paramName}},{{/pathParams}}{{#queryParams.0}}
             'query' => $this->query,{{/queryParams.0}}{{#bodyParams.0}}
-            'body' => $this->body,{{/bodyParams.0}}{{#formParams.0}}
-            'form' => $this->form,{{/formParams.0}}
+            'body' => $this->body,{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}
+            'form' => $this->form,{{/formParams.0.isFormParam}}{{/formParams.0}}
         ];
     }
 
