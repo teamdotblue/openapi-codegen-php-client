@@ -547,7 +547,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
     ArraySchema arraySchema = (ArraySchema) schema;
     if (arraySchema.getItems() != null
-         && ! array.getDefault().isEmpty()
+         && ! arraySchema.getDefault().isEmpty()
          && ModelUtils.isStringSchema(arraySchema.getItems())
     ) {
         return arraySchema.getDefault().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
