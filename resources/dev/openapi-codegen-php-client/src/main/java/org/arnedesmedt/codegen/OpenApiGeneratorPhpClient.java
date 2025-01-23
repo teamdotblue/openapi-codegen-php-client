@@ -532,21 +532,27 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
   @Override
   public String toDefaultValue(Schema schema) {
-    if (! ModelUtils.isArraySchema(schema) || schema.getDefault() == null) {
+    if (schema.getDefault() == null) {
+      return super.toDefaultValue(schema);
+    }
+
+    if (ModelUtils.isStringSchema(schema)) {
+        // escape single quotes in schema.getDefault().toString()
+        return schema.getDefault().toString().replace("'", "\\'");
+    }
+
+    if (! ModelUtils.isArraySchema(schema)) {
       return super.toDefaultValue(schema);
     }
 
     ArraySchema arraySchema = (ArraySchema) schema;
-    if (arraySchema.getItems() != null && ModelUtils.isStringSchema(arraySchema.getItems())) {
+    if (arraySchema.getItems() != null
+         && ! array.getDefault().isEmpty()
+         && ModelUtils.isStringSchema(arraySchema.getItems())
+    ) {
         return arraySchema.getDefault().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
     }
 
     return arraySchema.getDefault().toString();
-  }
-
-  @Override
-  protected ImmutableMap.Builder<String, Lambda> addMustacheLambdas() {
-      return super.addMustacheLambdas()
-              .put("escapeQuote", new EscapeChar("(?<=.)(?<!\\\\)\\'(?=.)", "\\\\\\'"));
   }
 }
