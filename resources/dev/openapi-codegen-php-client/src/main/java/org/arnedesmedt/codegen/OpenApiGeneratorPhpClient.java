@@ -34,8 +34,7 @@ import org.openapitools.codegen.templating.mustache.EscapeChar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.samskivert.mustache.Mustache.Lambda;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements CodegenConfig {
   public static final String GENERATOR_NAME         = "openapi-codegen-php-client";
@@ -546,7 +545,9 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
 
     ArraySchema arraySchema = (ArraySchema) schema;
+    ArrayNode arrayNode = (ArrayNode) arraySchema.getDefault();
     if (arraySchema.getItems() != null
+         && arrayNode.isEmpty() == false
          && ModelUtils.isStringSchema(arraySchema.getItems())
     ) {
         return arraySchema.getDefault().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
