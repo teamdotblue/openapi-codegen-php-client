@@ -547,12 +547,21 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
     ArraySchema arraySchema = (ArraySchema) schema;
     if (arraySchema.getItems() != null
-         && ! arraySchema.getDefault().isEmpty()
          && ModelUtils.isStringSchema(arraySchema.getItems())
     ) {
         return arraySchema.getDefault().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
     }
 
     return arraySchema.getDefault().toString();
+  }
+
+  // added because uploading file parameters give problems
+  @Override
+  public boolean isParameterNameUnique(CodegenParameter p, List<CodegenParameter> parameters) {
+      if (p.paramName == null) {
+          return true;
+      }
+
+      return super.isParameterNameUnique(p, parameters);
   }
 }
