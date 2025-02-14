@@ -60,7 +60,8 @@ final class {{classname}}{{^discriminator}} implements SpecialKeySupport, JsonSc
     {
         return [{{#vars}}{{#isListContainer}}{{^items.isContainer}}
             '{{name}}' => {{^complexType}}'{{items.baseType}}'{{/complexType}}{{#complexType}}{{{.}}}::class{{/complexType}},{{/items.isContainer}}{{/isListContainer}}{{#isContainer}}{{^isListContainer}}{{^items.isContainer}}
-            '{{name}}' => {{^complexType}}'{{items.baseType}}'{{/complexType}}{{#complexType}}{{{.}}}::class{{/complexType}},{{/items.isContainer}}{{/isListContainer}}{{/isContainer}}{{/vars}}
+            '{{name}}' => {{^complexType}}'{{items.baseType}}'{{/complexType}}{{#complexType}}{{{.}}}::class{{/complexType}},{{/items.isContainer}}{{/isListContainer}}{{/isContainer}}{{^isContainer}}{{^isListContainer}}{{^items.isContainer}}{{#isFreeFormObject}}
+            '{{name}}' => '\stdClass',{{/isFreeFormObject}}{{/items.isContainer}}{{/isListContainer}}{{/isContainer}}{{/vars}}
         ];
     }
 
