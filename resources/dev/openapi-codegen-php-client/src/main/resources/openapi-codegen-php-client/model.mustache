@@ -14,9 +14,9 @@ use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;{{/discriminator}}
 
-final class {{classname}}{{^discriminator}} implements SpecialKeySupport, JsonSchemaAwareRecord{{/discriminator}}{{#discriminator}} implements Discriminator{{/discriminator}}
+final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, JsonSchemaAwareRecord{{/discriminator}}{{#discriminator}} implements Discriminator{{/discriminator}}
 {
-    use {{classname}}Default;
+    use {{classFilename}}Default;
     {{^discriminator}}use JsonSchemaAwareRecordLogic;
     use SpecialKeySupportLogic;{{/discriminator}}{{#discriminator}}use DiscriminatorLogic;
 
