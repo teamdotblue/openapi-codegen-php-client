@@ -35,8 +35,8 @@ final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, Js
     /** @inheritDoc */
     public static function jsonSchemaAwareRecords(): array
     {
-        return [{{#interfaceModels}}
-            {{name}}::class,{{/interfaceModels}}
+        return [{{#mappedModels}}
+            {{modelName}}::class,{{/mappedModels}}
         ];
     }
 {{/discriminator}}{{^discriminator}}
