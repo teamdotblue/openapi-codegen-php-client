@@ -12,7 +12,7 @@
         "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
         "guzzlehttp/guzzle": "~7.0",
         "symfony/http-client-contracts": "~3.0",
-        "team-blue/php-client-mock": "^1.0",
+        "team-blue/php-client-mock": "^1.0 || ^2.0",
         "team-blue/php-util": "^1.0"
     },
     "require-dev" : {
