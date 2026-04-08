@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TeamBlue\OpenApi\Codegen\ClientBuilder;
 
-use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\ClientInterface as GuzzleClient;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface as SymfonyClient;
 use TeamBlue\ClientMock\Mock;
