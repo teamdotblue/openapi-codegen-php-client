@@ -489,6 +489,9 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   }
 
   @Override
+  public String toEnumVarName(String value, String datatype) { return value; }
+
+  @Override
   public boolean isDataTypeString(String dataType) {
     return "String".equalsIgnoreCase(dataType);
   }
