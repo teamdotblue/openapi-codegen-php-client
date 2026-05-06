@@ -16,7 +16,7 @@ use function array_shift;
 use function is_array;
 use function sprintf;
 
-/** @SuppressWarnings(PHPMD.CyclomaticComplexity) */
+/** @SuppressWarnings("PHPMD.CyclomaticComplexity") */
 abstract class Client
 {
     private const ENDPOINT_PROPERTIES_OPTIONS_MAP = [
