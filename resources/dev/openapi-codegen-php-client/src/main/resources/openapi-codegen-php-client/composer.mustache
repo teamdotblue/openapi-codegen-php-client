@@ -50,8 +50,8 @@
     "scripts": {
         "tests": [
             "vendor/bin/phpcbf",
-            "vendor/bin/phpcs -d memory_limit=256M",
-            "vendor/bin/phpstan analyze --no-progress --memory-limit 256M",
+            "vendor/bin/phpcs -d memory_limit=512M",
+            "vendor/bin/phpstan analyze --no-progress --memory-limit 512M",
             "vendor/bin/phpmd . text phpmd.xml --exclude vendor,resources,.openapi-generator",
             "vendor/bin/rector --dry-run --no-progress-bar"
         ]
