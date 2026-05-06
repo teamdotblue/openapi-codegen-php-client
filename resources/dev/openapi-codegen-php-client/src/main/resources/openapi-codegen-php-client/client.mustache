@@ -59,7 +59,7 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
         );
 
         return {{#responses.0.isArray}}{{^responses.0.primitiveType}}array_map(
-            static fn (array $responseItem) => {{responses.0.baseType}}::fromArray($responseItem),
+            {{responses.0.baseType}}::fromArray(...),
             $response
         ){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}::fromArray($response){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{#responses.0.primitiveType}}$response{{/responses.0.primitiveType}};
     }
