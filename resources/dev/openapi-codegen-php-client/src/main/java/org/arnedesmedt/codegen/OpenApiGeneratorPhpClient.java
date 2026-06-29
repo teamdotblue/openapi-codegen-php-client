@@ -341,6 +341,26 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
       return property;
   }
 
+  @Override
+  @SuppressWarnings("rawtypes")
+  public CodegenParameter fromParameter(Parameter parameter, Set<String> imports) {
+      CodegenParameter codegenParameter = super.fromParameter(parameter, imports);
+
+      Schema schema = parameter.getSchema();
+      if (schema != null && schema.getExtensions() != null) {
+          Object voType = schema.getExtensions().get("x-vo-type");
+          if (voType != null) {
+              if (codegenParameter.vendorExtensions == null) {
+                  codegenParameter.vendorExtensions = new HashMap<>();
+              }
+              codegenParameter.vendorExtensions.put("x-has-vo-type", true);
+              codegenParameter.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
+          }
+      }
+
+      return codegenParameter;
+  }
+
   private void createSchemaFromParameters(Operation operation, Components components, String inType) {
     List<Parameter> typeParameters = operation.getParameters()
         .stream()
