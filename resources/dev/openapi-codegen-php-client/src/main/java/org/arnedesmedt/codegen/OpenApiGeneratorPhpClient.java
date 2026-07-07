@@ -346,7 +346,6 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
                   property.vendorExtensions = new HashMap<>();
               }
               property.vendorExtensions.put("x-has-vo-type", true);
-              property.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
           }
       }
 
@@ -417,7 +416,6 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
     param.vendorExtensions.put("x-has-vo-type", true);
     param.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
-  }
 
   private void createSchemaFromParameters(Operation operation, Components components, String inType) {
     List<Parameter> typeParameters = operation.getParameters()
@@ -546,7 +544,6 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
                     var.vendorExtensions.put("x-has-vo-type", true);
                     var.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
                 }
-            }
         }
 
         // Simplify model var type
