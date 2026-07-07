@@ -338,6 +338,17 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         property.complexType = "mixed";
       }
 
+      if (p != null && p.getExtensions() != null) {
+          Object voType = p.getExtensions().get("x-vo-type");
+          if (voType != null) {
+              if (property.vendorExtensions == null) {
+                  property.vendorExtensions = new HashMap<>();
+              }
+              property.vendorExtensions.put("x-has-vo-type", true);
+              property.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
+          }
+      }
+
       return property;
   }
 
@@ -463,6 +474,33 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         List<ModelMap> models = objs.getModels();
         ModelMap modelMap = models.get(0);
         CodegenModel model = modelMap.getModel();
+
+        // Derive x-has-vo-type / x-vo-type-fqn from the x-vo-type vendor extension.
+        // DefaultCodegen copies all schema extensions into vendorExtensions, so we
+        // only need to translate them into the flags used by the templates.
+        List<List<CodegenProperty>> varLists = Arrays.asList(
+            model.vars,
+            model.allVars,
+            model.requiredVars,
+            model.optionalVars,
+            model.readOnlyVars,
+            model.readWriteVars
+        );
+        for (List<CodegenProperty> varList : varLists) {
+            if (varList == null) {
+                continue;
+            }
+            for (CodegenProperty var : varList) {
+                if (var.vendorExtensions == null) {
+                    continue;
+                }
+                Object voType = var.vendorExtensions.get("x-vo-type");
+                if (voType != null) {
+                    var.vendorExtensions.put("x-has-vo-type", true);
+                    var.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
+                }
+            }
+        }
 
         // Simplify model var type
         // define list of model vars to remove
