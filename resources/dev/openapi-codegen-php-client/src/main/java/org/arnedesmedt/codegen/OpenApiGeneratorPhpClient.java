@@ -415,7 +415,8 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         param.vendorExtensions = new HashMap<>();
     }
     param.vendorExtensions.put("x-has-vo-type", true);
-    param.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
+    param.vendorExtensions.put("x-vo-type", voType.toString());
+  }
 
   private void createSchemaFromParameters(Operation operation, Components components, String inType) {
     List<Parameter> typeParameters = operation.getParameters()
@@ -520,7 +521,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         ModelMap modelMap = models.get(0);
         CodegenModel model = modelMap.getModel();
 
-        // Derive x-has-vo-type / x-vo-type-fqn from the x-vo-type vendor extension.
+        // Derive x-has-vo-type from the x-vo-type vendor extension.
         // DefaultCodegen copies all schema extensions into vendorExtensions, so we
         // only need to translate them into the flags used by the templates.
         List<List<CodegenProperty>> varLists = Arrays.asList(
@@ -543,6 +544,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
                 if (voType != null) {
                     var.vendorExtensions.put("x-has-vo-type", true);
                 }
+            }
         }
 
         // Simplify model var type
