@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.openapitools.codegen.languages.PhpClientCodegen;
 import org.openapitools.codegen.templating.mustache.EscapeChar;
@@ -338,27 +339,83 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         property.complexType = "mixed";
       }
 
+      if (p != null && p.getExtensions() != null) {
+          Object voType = p.getExtensions().get("x-vo-type");
+          if (voType != null) {
+              if (property.vendorExtensions == null) {
+                  property.vendorExtensions = new HashMap<>();
+              }
+              property.vendorExtensions.put("x-has-vo-type", true);
+          }
+      }
+
       return property;
   }
 
   @Override
-  @SuppressWarnings("rawtypes")
-  public CodegenParameter fromParameter(Parameter parameter, Set<String> imports) {
-      CodegenParameter codegenParameter = super.fromParameter(parameter, imports);
+  public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
+    objs = super.postProcessOperationsWithModels(objs, allModels);
 
-      Schema schema = parameter.getSchema();
-      if (schema != null && schema.getExtensions() != null) {
-          Object voType = schema.getExtensions().get("x-vo-type");
-          if (voType != null) {
-              if (codegenParameter.vendorExtensions == null) {
-                  codegenParameter.vendorExtensions = new HashMap<>();
-              }
-              codegenParameter.vendorExtensions.put("x-has-vo-type", true);
-              codegenParameter.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
-          }
-      }
+    // Build a lookup of operationId -> parameter name -> schema so we can read
+    // the x-vo-type extension from the original parameter schemas.
+    Map<String, Map<String, Schema>> parameterSchemasByOperationId = new HashMap<>();
+    for (PathItem pathItem : openAPI.getPaths().values()) {
+        for (Operation operation : pathItem.readOperationsMap().values()) {
+            if (operation.getOperationId() == null || operation.getParameters() == null) {
+                continue;
+            }
+            Map<String, Schema> parameterSchemas = new HashMap<>();
+            for (Parameter parameter : operation.getParameters()) {
+                if (parameter.getName() != null && parameter.getSchema() != null) {
+                    parameterSchemas.put(parameter.getName(), parameter.getSchema());
+                }
+            }
+            parameterSchemasByOperationId.put(operation.getOperationId(), parameterSchemas);
+        }
+    }
 
-      return codegenParameter;
+    for (CodegenOperation op : objs.getOperations().getOperation()) {
+        Map<String, Schema> parameterSchemas = parameterSchemasByOperationId.getOrDefault(op.operationId, Collections.emptyMap());
+        List<List<CodegenParameter>> paramLists = Arrays.asList(
+            op.allParams,
+            op.pathParams,
+            op.queryParams,
+            op.headerParams,
+            op.formParams,
+            op.cookieParams
+        );
+        for (List<CodegenParameter> paramList : paramLists) {
+            if (paramList == null) {
+                continue;
+            }
+            for (CodegenParameter param : paramList) {
+                this.applyVoTypeToParameter(param, parameterSchemas);
+            }
+        }
+    }
+
+    return objs;
+  }
+
+  private void applyVoTypeToParameter(CodegenParameter param, Map<String, Schema> parameterSchemas) {
+    Object voType = param.vendorExtensions != null ? param.vendorExtensions.get("x-vo-type") : null;
+
+    if (voType == null) {
+        Schema parameterSchema = parameterSchemas.get(param.baseName);
+        if (parameterSchema != null && parameterSchema.getExtensions() != null) {
+            voType = parameterSchema.getExtensions().get("x-vo-type");
+        }
+    }
+
+    if (voType == null) {
+        return;
+    }
+
+    if (param.vendorExtensions == null) {
+        param.vendorExtensions = new HashMap<>();
+    }
+    param.vendorExtensions.put("x-has-vo-type", true);
+    param.vendorExtensions.put("x-vo-type", voType.toString());
   }
 
   private void createSchemaFromParameters(Operation operation, Components components, String inType) {
@@ -463,6 +520,32 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         List<ModelMap> models = objs.getModels();
         ModelMap modelMap = models.get(0);
         CodegenModel model = modelMap.getModel();
+
+        // Derive x-has-vo-type from the x-vo-type vendor extension.
+        // DefaultCodegen copies all schema extensions into vendorExtensions, so we
+        // only need to translate them into the flags used by the templates.
+        List<List<CodegenProperty>> varLists = Arrays.asList(
+            model.vars,
+            model.allVars,
+            model.requiredVars,
+            model.optionalVars,
+            model.readOnlyVars,
+            model.readWriteVars
+        );
+        for (List<CodegenProperty> varList : varLists) {
+            if (varList == null) {
+                continue;
+            }
+            for (CodegenProperty var : varList) {
+                if (var.vendorExtensions == null) {
+                    continue;
+                }
+                Object voType = var.vendorExtensions.get("x-vo-type");
+                if (voType != null) {
+                    var.vendorExtensions.put("x-has-vo-type", true);
+                }
+            }
+        }
 
         // Simplify model var type
         // define list of model vars to remove

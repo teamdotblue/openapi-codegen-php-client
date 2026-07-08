@@ -23,13 +23,13 @@ use TeamBlue\ValueObjects\ValueObject;
      *{{/notes}}{{#externalDocs}}
      * Documentation: {{url}}
      *{{/externalDocs}}{{#pathParams}}
-     * @param {{#vendorExtensions.x-has-vo-type}}{{{vendorExtensions.x-vo-type-fqn}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
+     * @param {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
      * @param {{#isContainer}}{{dataType}}<{{baseType}}>{{/isContainer}}{{^isContainer}}{{baseType}}{{#isMap}}<mixed>{{/isMap}}{{/isContainer}}{{^required}}|null{{/required}} $body{{/bodyParams.0}}
      *
      * @return {{^responses.0.schema}}mixed{{/responses.0.schema}}{{#responses.0.schema}}{{#responses.0.isArray}}array<{{responses.0.baseType}}>{{/responses.0.isArray}}{{#responses.0.primitiveType}}{{^responses.0.isArray}}{{responses.0.dataType}}{{#responses.0.isFreeFormObject}}<mixed>{{/responses.0.isFreeFormObject}}{{/responses.0.isArray}}{{/responses.0.primitiveType}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}
      */
     {{vendorExtensions.x-operation-scope}} function {{operationId}}({{#pathParams}}
-        {{#vendorExtensions.x-has-vo-type}}{{{vendorExtensions.x-vo-type-fqn}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
+        {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
         {{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}
