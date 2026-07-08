@@ -542,7 +542,6 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
                 Object voType = var.vendorExtensions.get("x-vo-type");
                 if (voType != null) {
                     var.vendorExtensions.put("x-has-vo-type", true);
-                    var.vendorExtensions.put("x-vo-type-fqn", "\\" + voType.toString());
                 }
         }
 
