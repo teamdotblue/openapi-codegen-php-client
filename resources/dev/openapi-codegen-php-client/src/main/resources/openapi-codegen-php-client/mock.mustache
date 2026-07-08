@@ -20,11 +20,11 @@ final class Api{{clientClass}}Mock implements Mock
 
     /**
      * @see Client::{{operationId}}(){{#pathParams}}
-     * @param {{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
+     * @param {{#vendorExtensions.x-has-vo-type}}{{{vendorExtensions.x-vo-type-fqn}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
      * @param {{#isContainer}}{{dataType}}<{{baseType}}>{{/isContainer}}{{^isContainer}}{{baseType}}{{#isMap}}<mixed>{{/isMap}}{{/isContainer}}{{^required}}|null{{/required}} $body{{/bodyParams.0}}
      */
     public function {{operationId}}({{#pathParams}}
-        {{dataType}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
+        {{#vendorExtensions.x-has-vo-type}}{{{vendorExtensions.x-vo-type-fqn}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
         {{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}
