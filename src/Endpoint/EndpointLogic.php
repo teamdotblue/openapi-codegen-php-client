@@ -6,6 +6,7 @@ namespace TeamBlue\OpenApi\Codegen\Endpoint;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
+use SplFileObject;
 
 use function array_diff_key;
 use function array_flip;
@@ -68,7 +69,7 @@ trait EndpointLogic
     }
 
     /** @return ImmutableRecord|array<mixed>|null */
-    public function body(): ImmutableRecord|array|null
+    public function body(): ImmutableRecord|array|SplFileObject|null
     {
         return $this->body ?? null;
     }
