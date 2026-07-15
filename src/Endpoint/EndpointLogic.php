@@ -10,6 +10,8 @@ use SplFileObject;
 
 use function array_diff_key;
 use function array_flip;
+use function get_object_vars;
+use function is_scalar;
 use function ltrim;
 use function sprintf;
 use function str_replace;
@@ -50,12 +52,13 @@ trait EndpointLogic
             'form',
         ];
 
-        $data = $this->toArray();
+        // Not using toArray() here, since it would fail to convert a body or form that is a SplFileObject.
+        $data = get_object_vars($this);
         $pathParameters = array_diff_key($data, array_flip($diffPathParameterNames));
         foreach ($pathParameters as $pathParameterName => $pathParameter) {
             $uri = str_replace(
                 sprintf('{%s}', $pathParameterName),
-                strval($pathParameter),
+                is_scalar($pathParameter) ? strval($pathParameter) : '',
                 (string) $uri,
             );
         }

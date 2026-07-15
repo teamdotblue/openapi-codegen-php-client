@@ -6,7 +6,9 @@ namespace TeamBlue\OpenApi\Codegen\Client;
 
 use Closure;
 use EventEngine\Data\ImmutableRecord;
+use GuzzleHttp\Psr7\Utils;
 use RuntimeException;
+use SplFileObject;
 use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
 use TeamBlue\Util\ArrayUtil;
 
@@ -101,34 +103,54 @@ abstract class Client
                 continue;
             }
 
-            if ($data instanceof ImmutableRecord) {
-                $data = $data->toArray();
-            }
-
-            if (! is_array($data)) {
-                throw new RuntimeException(
-                    sprintf(
-                        'Client data for property \'%s\' and method \'%s\' should be an array.',
-                        $propertyName,
-                        $endpoint->method(),
-                    ),
-                );
-            }
-
-            $data = ArrayUtil::rejectNullValues($data);
-
-            if (! ArrayUtil::isAssociative($data)) {
-                $options[$option] = array_map(
-                    static fn ($dataItem) => $dataItem instanceof ImmutableRecord ? $dataItem->toArray() : $dataItem,
-                    $data,
-                );
+            if ($data instanceof SplFileObject) {
+                $options['multipart'][] = $this->buildMultipartData($propertyName, $data);
 
                 continue;
             }
 
-            $options[$option] = ArrayUtil::removeSuffixFromKeys($data, '[]');
+            $options[$option] = $this->buildOptionData($endpoint, $propertyName, $data);
         }
 
         return $options;
+    }
+
+    /** @return array<string, mixed> */
+    private function buildMultipartData(string $propertyName, SplFileObject $file): array
+    {
+        return [
+            'name' => $propertyName,
+            'contents' => Utils::tryFopen($file->getPathname(), 'r'),
+            'filename' => $file->getFilename(),
+        ];
+    }
+
+    /** @return array<mixed> */
+    private function buildOptionData(Endpoint $endpoint, string $propertyName, mixed $data): array
+    {
+        if ($data instanceof ImmutableRecord) {
+            $data = $data->toArray();
+        }
+
+        if (! is_array($data)) {
+            throw new RuntimeException(
+                sprintf(
+                    'Client data for property \'%s\' and method \'%s\' should be an array.',
+                    $propertyName,
+                    $endpoint->method(),
+                ),
+            );
+        }
+
+        $data = ArrayUtil::rejectNullValues($data);
+
+        if (! ArrayUtil::isAssociative($data)) {
+            return array_map(
+                static fn ($dataItem) => $dataItem instanceof ImmutableRecord ? $dataItem->toArray() : $dataItem,
+                $data,
+            );
+        }
+
+        return ArrayUtil::removeSuffixFromKeys($data, '[]');
     }
 }

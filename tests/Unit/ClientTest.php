@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TeamBlue\OpenApi\Codegen\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use SplFileObject;
 use TeamBlue\OpenApi\Codegen\Client\NullClientWrapper;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
@@ -93,5 +94,34 @@ class ClientTest extends TestCase
 
         $client = (new ClientBuilder($wrapper))->build();
         $client->testWithEmptyBody();
+    }
+
+    public function testTestEndpointWithFileBody(): void
+    {
+        $file = new SplFileObject(__FILE__);
+
+        $wrapper = $this->createMock(NullClientWrapper::class);
+        $wrapper
+            ->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                'test-with-file-body/1',
+                $this->callback(function (array $options) use ($file): bool {
+                    $this->assertArrayHasKey('multipart', $options);
+                    $this->assertCount(1, $options['multipart']);
+
+                    $part = $options['multipart'][0];
+                    $this->assertSame('body', $part['name']);
+                    $this->assertSame($file->getFilename(), $part['filename']);
+                    $this->assertIsResource($part['contents']);
+
+                    return true;
+                }),
+            )
+            ->willReturn([]);
+
+        $client = (new ClientBuilder($wrapper))->build();
+        $client->testWithFileBody($file);
     }
 }
