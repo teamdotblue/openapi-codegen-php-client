@@ -6,7 +6,6 @@ namespace TeamBlue\OpenApi\Codegen\Client;
 
 use Closure;
 use EventEngine\Data\ImmutableRecord;
-use GuzzleHttp\Psr7\Utils;
 use RuntimeException;
 use SplFileObject;
 use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
@@ -15,6 +14,7 @@ use TeamBlue\Util\ArrayUtil;
 use function array_key_exists;
 use function array_map;
 use function array_shift;
+use function file_get_contents;
 use function is_array;
 use function sprintf;
 
@@ -104,7 +104,7 @@ abstract class Client
             }
 
             if ($data instanceof SplFileObject) {
-                $options['body'] = Utils::tryFopen($data->getPathname(), 'r');
+                $options['body'] = $this->readFile($data);
 
                 continue;
             }
@@ -113,6 +113,24 @@ abstract class Client
         }
 
         return $options;
+    }
+
+    /**
+     * Reads the file as a string rather than handing over a raw resource/stream: several
+     * ClientWrapper implementations (e.g. the BrowserKit-backed test client used by
+     * api-platform/core) only accept a string body, not a resource.
+     */
+    private function readFile(SplFileObject $file): string
+    {
+        $contents = file_get_contents($file->getPathname());
+
+        if ($contents === false) {
+            throw new RuntimeException(
+                sprintf('Could not read file \'%s\'.', $file->getPathname()),
+            );
+        }
+
+        return $contents;
     }
 
     /** @return array<mixed> */

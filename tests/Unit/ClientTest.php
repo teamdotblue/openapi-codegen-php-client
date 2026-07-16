@@ -10,7 +10,7 @@ use TeamBlue\OpenApi\Codegen\Client\NullClientWrapper;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
 
-use function stream_get_meta_data;
+use function file_get_contents;
 
 class ClientTest extends TestCase
 {
@@ -111,8 +111,8 @@ class ClientTest extends TestCase
                 'test-with-file-body/1',
                 $this->callback(function (array $options) use ($file): bool {
                     $this->assertArrayHasKey('body', $options);
-                    $this->assertIsResource($options['body']);
-                    $this->assertSame($file->getPathname(), stream_get_meta_data($options['body'])['uri']);
+                    $this->assertIsString($options['body']);
+                    $this->assertSame(file_get_contents($file->getPathname()), $options['body']);
 
                     return true;
                 }),
