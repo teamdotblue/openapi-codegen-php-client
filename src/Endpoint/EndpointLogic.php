@@ -7,6 +7,7 @@ namespace TeamBlue\OpenApi\Codegen\Endpoint;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
 use SplFileObject;
+use Stringable;
 
 use function array_diff_key;
 use function array_flip;
@@ -58,7 +59,9 @@ trait EndpointLogic
         foreach ($pathParameters as $pathParameterName => $pathParameter) {
             $uri = str_replace(
                 sprintf('{%s}', $pathParameterName),
-                is_scalar($pathParameter) ? strval($pathParameter) : '',
+                is_scalar($pathParameter) || $pathParameter instanceof Stringable
+                    ? strval($pathParameter)
+                    : '',
                 (string) $uri,
             );
         }
