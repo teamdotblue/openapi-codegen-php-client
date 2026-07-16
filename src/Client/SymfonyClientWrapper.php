@@ -7,6 +7,7 @@ namespace TeamBlue\OpenApi\Codegen\Client;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
+use function array_key_exists;
 use function assert;
 use function json_decode;
 
@@ -24,11 +25,26 @@ class SymfonyClientWrapper implements ClientWrapper
     /** @inheritDoc */
     public function request(string $method, string $uri, array $options = []): mixed
     {
-        $response = $this->client->request($method, $uri, $options);
+        $response = $this->client->request($method, $uri, $this->normalizeOptions($options));
 
         return $this
             ->setResponse($response)
             ->contentFromResponse($response);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeOptions(array $options): array
+    {
+        if (array_key_exists('form_params', $options) && ! array_key_exists('body', $options)) {
+            $options['body'] = $options['form_params'];
+            unset($options['form_params']);
+        }
+
+        return $options;
     }
 
     private function contentFromResponse(ResponseInterface $response): mixed

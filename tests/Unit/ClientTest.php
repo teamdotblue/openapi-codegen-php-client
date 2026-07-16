@@ -10,6 +10,8 @@ use TeamBlue\OpenApi\Codegen\Client\NullClientWrapper;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
 
+use function stream_get_meta_data;
+
 class ClientTest extends TestCase
 {
     /** @return array<string, array<string, mixed>> */
@@ -108,13 +110,9 @@ class ClientTest extends TestCase
                 'POST',
                 'test-with-file-body/1',
                 $this->callback(function (array $options) use ($file): bool {
-                    $this->assertArrayHasKey('multipart', $options);
-                    $this->assertCount(1, $options['multipart']);
-
-                    $part = $options['multipart'][0];
-                    $this->assertSame('body', $part['name']);
-                    $this->assertSame($file->getFilename(), $part['filename']);
-                    $this->assertIsResource($part['contents']);
+                    $this->assertArrayHasKey('body', $options);
+                    $this->assertIsResource($options['body']);
+                    $this->assertSame($file->getPathname(), stream_get_meta_data($options['body'])['uri']);
 
                     return true;
                 }),

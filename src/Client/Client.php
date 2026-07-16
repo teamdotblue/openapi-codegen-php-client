@@ -104,7 +104,7 @@ abstract class Client
             }
 
             if ($data instanceof SplFileObject) {
-                $options['multipart'][] = $this->buildMultipartData($propertyName, $data);
+                $options['body'] = Utils::tryFopen($data->getPathname(), 'r');
 
                 continue;
             }
@@ -113,16 +113,6 @@ abstract class Client
         }
 
         return $options;
-    }
-
-    /** @return array<string, mixed> */
-    private function buildMultipartData(string $propertyName, SplFileObject $file): array
-    {
-        return [
-            'name' => $propertyName,
-            'contents' => Utils::tryFopen($file->getPathname(), 'r'),
-            'filename' => $file->getFilename(),
-        ];
     }
 
     /** @return array<mixed> */
