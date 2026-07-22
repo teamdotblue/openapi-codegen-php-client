@@ -9,6 +9,7 @@ use SplFileObject;
 use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestData;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithMappedPathParameter;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithStringableIdAndFileBody;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestStringableId;
 
@@ -85,5 +86,22 @@ class EndpointTest extends TestCase
         );
 
         $this->assertEquals('test-with-stringable-id-and-file-body/abc123', $endpoint->uri());
+    }
+
+    /**
+     * When the OpenAPI path parameter name (used in the URI template, e.g. "server_id") differs
+     * from the generated PHP property name (e.g. "serverId"), uri() must still be able to
+     * substitute the placeholder using the endpoint's keyMapping().
+     */
+    public function testUriWithMappedPathParameterNames(): void
+    {
+        $endpoint = TestEndpointWithMappedPathParameter::fromArray(
+            [
+                'server_id' => 'localhost',
+                'zone_id' => 'example.com.',
+            ],
+        );
+
+        $this->assertEquals('servers/localhost/zones/example.com.', $endpoint->uri());
     }
 }

@@ -6,6 +6,7 @@ namespace TeamBlue\OpenApi\Codegen\Endpoint;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
+use EventEngine\Data\SpecialKeySupport;
 use SplFileObject;
 use Stringable;
 
@@ -57,6 +58,10 @@ trait EndpointLogic
         $data = get_object_vars($this);
         $pathParameters = array_diff_key($data, array_flip($diffPathParameterNames));
         foreach ($pathParameters as $pathParameterName => $pathParameter) {
+            if ($this instanceof SpecialKeySupport) {
+                $pathParameterName = $this->convertKeyForArray($pathParameterName);
+            }
+
             $uri = str_replace(
                 sprintf('{%s}', $pathParameterName),
                 is_scalar($pathParameter) || $pathParameter instanceof Stringable
