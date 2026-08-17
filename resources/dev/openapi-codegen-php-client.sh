@@ -23,14 +23,14 @@ then
   "${rootdir}"/resources/scripts/before_run.sh
 fi
 
-docker run --rm -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
                                                                -i /local/resources/api/api-spec.json \
                                                                -o /local/ \
                                                                -c /local/resources/api/config.json \
                                                                -t /local/resources/api/templates 1>/dev/null
 
 # Create the factories
-docker run --rm -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
                                                                -i /local/resources/api/api-spec.json \
                                                                -o /local/ \
                                                                -c /local/resources/api/config.json \
@@ -39,7 +39,7 @@ docker run --rm -v "${rootdir}":/local ${generatorimage} generate -g openapi-cod
                                                                --global-property=models 1>/dev/null
 
 # Create the defaults
-docker run --rm -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
                                                                -i /local/resources/api/api-spec.json \
                                                                -o /local/ \
                                                                -c /local/resources/api/config.json \
@@ -48,7 +48,6 @@ docker run --rm -v "${rootdir}":/local ${generatorimage} generate -g openapi-cod
                                                                --global-property=models \
                                                                --skip-overwrite 1>/dev/null
 
-cd "${rootdir}" && sudo chown -R "$(id -u):$(id -g)" Client.php ClientMock.php ApiClientMock.php ClientInterface.php README.md composer.json grumphp.yml phpcs.xml phpmd.xml phpstan.neon rector.php Model Endpoint Factory Default
 # Exit code of phpcbf is 1 if all is fixed https://github.com/squizlabs/PHP_CodeSniffer/issues/2898
 cd "${rootdir}" && (vendor/bin/phpcbf --extensions=php ./Client.php ./ClientMock.php ./ApiClientMock.php ./ClientInterface.php Model/ Endpoint/ Factory/ Default/ 1> /dev/null || true)
 cd "${rootdir}" && vendor/bin/rector --no-progress-bar --output-format=json

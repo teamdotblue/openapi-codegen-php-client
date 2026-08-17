@@ -1,4 +1,4 @@
-FROM timbru31/alpine-java-maven AS builder
+FROM maven:3.9-amazoncorretto-17-alpine AS builder
 
 WORKDIR /build
 COPY . /build/
