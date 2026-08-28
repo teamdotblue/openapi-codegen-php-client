@@ -43,6 +43,9 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   public static final String COPYRIGHT              = "copyright";
   public static final String CLIENT_CLASS           = "clientClass";
   public static final String CLIENT_CLASS_QUALIFIER = "clientClassQualifier";
+  public static final String CLIENTS_MODE           = "clients";
+
+  private boolean clientsMode = false;
 
   public OpenApiGeneratorPhpClient() {
     super();
@@ -68,6 +71,8 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   public void processOpts() {
     super.processOpts();
 
+    this.clientsMode = additionalProperties.containsKey(CLIENTS_MODE);
+
     String clientClass = (String) additionalProperties.getOrDefault(CLIENT_CLASS, "Client");
     additionalProperties.put(CLIENT_CLASS, clientClass);
 
@@ -77,18 +82,28 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
     this.resetTemplateFiles();
 
-    supportingFiles.add(new SupportingFile("client.mustache", "", clientClass.concat(".php")));
-    supportingFiles.add(new SupportingFile("clientInterface.mustache", "", clientClass.concat("Interface.php")));
-    supportingFiles.add(new SupportingFile("readme.mustache", "", "README.md"));
-    supportingFiles.add(new SupportingFile("phpstan.mustache", "", "phpstan.neon"));
-    supportingFiles.add(new SupportingFile("phpcs.mustache", "", "phpcs.xml"));
-    supportingFiles.add(new SupportingFile("composer.mustache", "", "composer.json"));
-    supportingFiles.add(new SupportingFile("rector.mustache", "", "rector.php"));
-    supportingFiles.add(new SupportingFile("phpmd.mustache", "", "phpmd.xml"));
-    supportingFiles.add(new SupportingFile("grumphp.mustache", "", "grumphp.yml"));
-    supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
-    supportingFiles.add(new SupportingFile("mock.mustache", "", "Api".concat(clientClass.concat("Mock.php"))));
-    supportingFiles.add(new SupportingFile("mockery.mustache", "", clientClass.concat("Mock.php")));
+    // PhpClientCodegen defaults to a "lib" source folder, but the generated
+    // rector.php/phpcs.xml/composer.json all assume Model and Endpoint live
+    // at the project root.
+    this.setSrcBasePath("");
+
+    if (this.clientsMode) {
+        // Generated once per spec: one accessor + one createXxxClient()/createXxxMock()
+        // hook pair per tag, dispatching to whatever client.mustache/mock.mustache
+        // produced for that tag (see apiFilename()/addOperationToGroup() below).
+        supportingFiles.add(new SupportingFile("clientBuilder.mustache", "", "AbstractClientBuilder.php"));
+        // rector.php needs to list every generated {Tag}Client{,Interface,Mock}.php
+        // file by name, so it can only be rendered once tags are known (this pass).
+        supportingFiles.add(new SupportingFile("rector.mustache", "", "rector.php"));
+    } else {
+        supportingFiles.add(new SupportingFile("readme.mustache", "", "README.md"));
+        supportingFiles.add(new SupportingFile("phpstan.mustache", "", "phpstan.neon"));
+        supportingFiles.add(new SupportingFile("phpcs.mustache", "", "phpcs.xml"));
+        supportingFiles.add(new SupportingFile("composer.mustache", "", "composer.json"));
+        supportingFiles.add(new SupportingFile("phpmd.mustache", "", "phpmd.xml"));
+        supportingFiles.add(new SupportingFile("grumphp.mustache", "", "grumphp.yml"));
+        supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
+    }
 
     if (additionalProperties.containsKey("factories")) {
         this.setSrcBasePath("Factory");
@@ -214,7 +229,6 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   }
 
   @Override
-  @SuppressWarnings("static-method")
   public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation co, Map<String, List<CodegenOperation>> operations) {
       String uniqueName = co.operationId;
       co.operationIdLowerCase = uniqueName.toLowerCase(Locale.ROOT);
@@ -228,7 +242,43 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
       co.vendorExtensions.put("x-operation-scope", co.vendorExtensions.getOrDefault("x-operation-scope", "public"));
       co.vendorExtensions.put("x-add-to-documentation", co.vendorExtensions.getOrDefault("x-operation-scope", "public").equals("public"));
 
+      if (this.clientsMode) {
+          // Real tag-based grouping (framework already fans a multi-tag operation out
+          // to one call per tag), so each generated {Tag}Client only sees its own ops.
+          operations.computeIfAbsent(tag, key -> new ArrayList<>()).add(co);
+          return;
+      }
+
+      // Endpoint generation must stay one file per operation (see api.mustache), so
+      // this pass keeps grouping by operationId regardless of the operation's tags.
       operations.put(uniqueName, Arrays.asList(co));
+  }
+
+  @Override
+  public String apiFilename(String templateName, String tag) {
+      if (!this.clientsMode) {
+          return super.apiFilename(templateName, tag);
+      }
+
+      String clientClass = (String) additionalProperties.getOrDefault(CLIENT_CLASS, "Client");
+      String pascalTag = toApiName(tag);
+      String filename;
+
+      switch (templateName) {
+          case "client.mustache":
+              filename = pascalTag.concat(clientClass).concat(".php");
+              break;
+          case "clientInterface.mustache":
+              filename = pascalTag.concat(clientClass).concat("Interface.php");
+              break;
+          case "mock.mustache":
+              filename = "Api".concat(pascalTag).concat(clientClass).concat("Mock.php");
+              break;
+          default:
+              return super.apiFilename(templateName, tag);
+      }
+
+      return this.outputFolder() + File.separator + filename;
   }
 
   @Override
@@ -583,7 +633,13 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     this.modelTestTemplateFiles.clear();
     this.modelDocTemplateFiles.clear();
 
-    apiTemplateFiles.put("api.mustache", ".php");
+    if (this.clientsMode) {
+        apiTemplateFiles.put("client.mustache", ".php");
+        apiTemplateFiles.put("clientInterface.mustache", ".php");
+        apiTemplateFiles.put("mock.mustache", ".php");
+    } else {
+        apiTemplateFiles.put("api.mustache", ".php");
+    }
   }
 
   @Override

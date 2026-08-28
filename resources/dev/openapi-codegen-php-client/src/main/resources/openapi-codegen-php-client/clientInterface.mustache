@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace {{invokerPackage}};
 
-use TeamBlue\ValueObjects\ValueObject;
-{{#models}}{{#model}}use {{importPath}};
-{{/model}}{{/models}}use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
-
 /**
  * @SuppressWarnings("PHPMD.ExcessiveClassLength")
  * @SuppressWarnings("PHPMD.ExcessivePublicCount")
  * @SuppressWarnings("PHPMD.ExcessiveClassComplexity")
  * phpcs:disable SlevomatCodingStandard.Classes.SuperfluousInterfaceNaming.SuperfluousSuffix
  */
-{{#clientClassQualifier}}{{{.}}} {{/clientClassQualifier}}interface {{clientClass}}Interface
-{{=<% %>=}}{<%#apiInfo%><%={{ }}=%>{{#apis}}{{#operations}}{{#operation}}
+interface {{classname}}{{clientClass}}Interface
+{{=<% %>=}}{<%={{ }}=%>
+    public const string TAG = '{{classname}}';
+{{#operations}}{{#operation}}
     /**{{#summary}}
      * {{.}}
      *{{/summary}}{{#notes}}
@@ -31,11 +29,11 @@ use TeamBlue\ValueObjects\ValueObject;
     {{vendorExtensions.x-operation-scope}} function {{operationId}}({{#pathParams}}
         {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
-        {{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
+        \{{invokerPackage}}\Model\{{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}
-        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
+        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{#bodyParams.0.isModel}}\{{invokerPackage}}\Model\{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{^bodyParams.0.isModel}}{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{^queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{/bodyParams.0}}
-        {{formParams.0.baseType}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
-    {{/formParams.0.isFormParam}}{{/formParams.0}}){{#responses.0.schema}}: {{#responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{#responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}{{^pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
+        {{#formParams.0.isModel}}\{{invokerPackage}}\Model\{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.isModel}}{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
+    {{/formParams.0.isFormParam}}{{/formParams.0}}){{#responses.0.schema}}: {{#responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{#responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}\{{invokerPackage}}\Model\{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}{{^pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
    {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}};
-{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}}
+{{/operation}}{{/operations}}}

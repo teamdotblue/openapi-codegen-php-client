@@ -4,23 +4,13 @@ declare(strict_types=1);
 
 namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
-use TeamBlue\ClientMock\Mock;
-use TeamBlue\ClientMock\MockPersister;
-use TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilder;
-use Unit\Client\ClientMock;
-
 class ClientBuilderWithNonExistingConfig extends ClientBuilder
 {
-    public function build(): Client
+    protected function createClient(string $tag): \TeamBlue\OpenApi\Codegen\Client\Client
     {
-        return new Client(
-            $this->client(),
-            $this->configs(__DIR__ . '/config-non-exist.json'),
-        );
-    }
-
-    public static function mock(): Mock
-    {
-        return new ClientMock(new MockPersister());
+        return match ($tag) {
+            ClientInterface::TAG => new Client($this->client(), $this->configs(__DIR__ . '/config-non-exist.json')),
+            default => parent::createClient($tag),
+        };
     }
 }

@@ -15,11 +15,13 @@ return static function (RectorConfig $rectorConfig): void {
             __DIR__ . '/Endpoint',
             __DIR__ . '/Model',
             __DIR__ . '/Factory',
-            __DIR__ . '/Client.php',
             __DIR__ . '/ClientBuilder.php',
-            __DIR__ . '/ApiClientMock.php',
-            __DIR__ . '/ClientInterface.php',
-            __DIR__ . '/ClientMock.php',
+            __DIR__ . '/AbstractClientBuilder.php',
+{{#apiInfo}}{{#apis}}
+            __DIR__ . '/{{classname}}{{clientClass}}.php',
+            __DIR__ . '/{{classname}}{{clientClass}}Interface.php',
+            __DIR__ . '/Api{{classname}}{{clientClass}}Mock.php',
+{{/apis}}{{/apiInfo}}
         ],
     );
     $rectorConfig->phpVersion(PhpVersion::PHP_81);

@@ -1,25 +1,24 @@
 <?php
+
 declare(strict_types=1);
 
 namespace {{package}};
 
+use EventEngine\Data\SpecialKeySupport;
 use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
 use TeamBlue\OpenApi\Codegen\Endpoint\EndpointLogic;
 use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
-use EventEngine\Data\ImmutableRecord;
-use EventEngine\Data\ImmutableRecordLogic;
-use EventEngine\Data\SpecialKeySupport;
 {{#operations}}
 {{#operation}}
 {{#queryParams.0}}
 use {{invokerPackage}}\Model\{{operationIdCamelCase}}Query;
 {{/queryParams.0}}
-{{#bodyParams.0}}
+{{#bodyParams.0}}{{#bodyParams.0.isModel}}
 use {{invokerPackage}}\Model\{{bodyParams.0.baseType}};
-{{/bodyParams.0}}
-{{#formParams.0}}{{#formParams.0.isFormParam}}
+{{/bodyParams.0.isModel}}{{/bodyParams.0}}
+{{#formParams.0}}{{#formParams.0.isFormParam}}{{#formParams.0.isModel}}
 use {{invokerPackage}}\Model\{{formParams.0.baseType}};
-{{/formParams.0.isFormParam}}{{/formParams.0}}
+{{/formParams.0.isModel}}{{/formParams.0.isFormParam}}{{/formParams.0}}
 {{/operation}}
 {{/operations}}
 
@@ -32,15 +31,16 @@ class {{classname}} implements Endpoint, SpecialKeySupport
 
     private string $method = '{{httpMethod}}';
     private string $uri = '{{path}}';{{#pathParams}}
-    /** @var {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} */
-    private ${{paramName}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}{{#isNullable}} = null{{/isNullable}}{{^required}}{{^isNullable}} = null{{/isNullable}}{{/required}}{{/defaultValue}};{{/pathParams}}{{#queryParams.0}}
+    {{#isContainer}}/** @var {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} */
+    {{/isContainer}}private {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} ${{paramName}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}{{#isNullable}} = null{{/isNullable}}{{^required}}{{^isNullable}} = null{{/isNullable}}{{/required}}{{/defaultValue}};{{/pathParams}}{{#queryParams.0}}
     private {{operationIdCamelCase}}Query|null $query = null;{{/queryParams.0}}{{#bodyParams.0}}
-    /** @var {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}<{{bodyParams.0.baseType}}>{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{#bodyParams.0.isMap}}<mixed>{{/bodyParams.0.isMap}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body */
-    private {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}};{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}
+    {{#bodyParams.0.isContainer}}/** @var {{bodyParams.0.dataType}}<{{bodyParams.0.baseType}}>{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body */
+    {{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{#bodyParams.0.isMap}}/** @var {{bodyParams.0.baseType}}<mixed>{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body */
+    {{/bodyParams.0.isMap}}{{/bodyParams.0.isContainer}}private {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}};{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}
     private {{formParams.0.baseType}}{{{.}}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}};{{/formParams.0.isFormParam}}{{/formParams.0}}{{#pathParams}}
 
-    /** @return {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} */
-    public function {{paramName}}()
+    {{#isContainer}}/** @return {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}} */
+    {{/isContainer}}public function {{paramName}}(): {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}
     {
         return $this->{{paramName}};
     }{{/pathParams}}
@@ -59,9 +59,9 @@ class {{classname}} implements Endpoint, SpecialKeySupport
     /** @return array<string,string> */
     public function keyMapping(): array
     {
-        return [{{#pathParams}}
-            '{{baseName}}' => '{{paramName}}',{{/pathParams}}
-        ];
+        return [{{^pathParams}}]{{/pathParams}}{{#pathParams}}
+            '{{baseName}}' => '{{paramName}}',{{/pathParams}}{{#pathParams.0}}
+        ]{{/pathParams.0}};
     }{{#bodyParams.0.isContainer}}
 
     /** @return array<string, string> */

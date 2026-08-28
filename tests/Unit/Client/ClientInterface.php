@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Unit\Client;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
 // phpcs:ignore SlevomatCodingStandard.Classes.SuperfluousInterfaceNaming.SuperfluousSuffix
 interface ClientInterface
 {
+    public const string TAG = 'first';
 }

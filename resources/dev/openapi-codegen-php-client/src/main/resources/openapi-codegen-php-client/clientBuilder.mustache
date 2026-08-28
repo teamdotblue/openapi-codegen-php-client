@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{invokerPackage}};
+
+use TeamBlue\ClientMock\Mock;
+use TeamBlue\OpenApi\Codegen\Client\Client;
+use TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilder;
+use TeamBlue\OpenApi\Codegen\ClientBuilder\UnknownClientTagException;
+
+/**
+ * Generated once per spec: one accessor method per OpenAPI tag, dispatching
+ * to a project-specific createXxxClient()/createXxxMock() hook implemented
+ * by the hand-written concrete ClientBuilder subclass.
+ */
+abstract class AbstractClientBuilder extends ClientBuilder
+{
+{{#apiInfo}}{{#apis}}
+    public function {{#lambda.camelcase}}{{classname}}{{/lambda.camelcase}}(): {{classname}}{{clientClass}}Interface
+    {
+        /** @var {{classname}}{{clientClass}}Interface */
+        return $this->build({{classname}}{{clientClass}}Interface::TAG);
+    }
+
+{{/apis}}{{/apiInfo}}
+    final protected function createClient(string $tag): Client
+    {
+        return match ($tag) {
+{{#apiInfo}}{{#apis}}
+            {{classname}}{{clientClass}}Interface::TAG => $this->create{{classname}}{{clientClass}}(),
+{{/apis}}{{/apiInfo}}
+            default => throw UnknownClientTagException::forTag($tag),
+        };
+    }
+{{#apiInfo}}{{#apis}}
+    abstract protected function create{{classname}}{{clientClass}}(): {{classname}}{{clientClass}};
+{{/apis}}{{/apiInfo}}
+
+    final public static function mock(string $tag): Mock
+    {
+        return match ($tag) {
+{{#apiInfo}}{{#apis}}
+            {{classname}}{{clientClass}}Interface::TAG => static::create{{classname}}{{clientClass}}Mock(),
+{{/apis}}{{/apiInfo}}
+            default => throw UnknownClientTagException::forTag($tag),
+        };
+    }
+{{#apiInfo}}{{#apis}}
+    abstract protected static function create{{classname}}{{clientClass}}Mock(): Mock;
+{{/apis}}{{/apiInfo}}
+}

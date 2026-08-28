@@ -27,6 +27,9 @@ abstract class ClientBuilder
 {
     protected ClientWrapper $client;
 
+    /** @var array<string, Client> */
+    private array $clients = [];
+
     public function __construct(GuzzleClient|SymfonyClient|ClientWrapper $client)
     {
         $this->client = match (true) {
@@ -42,11 +45,22 @@ abstract class ClientBuilder
     }
 
     /**
-     * Return the configured client.
+     * Returns the client for $tag, building it once and memoizing it for the
+     * lifetime of this builder instance.
      */
-    abstract public function build(): Client;
+    final protected function build(string $tag): Client
+    {
+        return $this->clients[$tag] ??= $this->createClient($tag);
+    }
 
-    abstract public static function mock(): Mock;
+    /** Routes $tag to the right concrete Client. */
+    abstract protected function createClient(string $tag): Client;
+
+    /**
+     * Returns a fresh Mock for $tag. Deliberately not cached: mocks seed
+     * per-test expectations and must not leak state across tests/tags.
+     */
+    abstract public static function mock(string $tag): Mock;
 
     /** @return array<string, mixed> */
     protected function configs(string $path): array
