@@ -20,6 +20,6 @@ class ClientBuilder extends \TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilde
 
     public static function mock(): Mock
     {
-        return new ClientMock(new MockPersister());
+        return (new ClientMock())->setPersister(new MockPersister());
     }
 }

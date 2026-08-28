@@ -21,6 +21,6 @@ class ClientBuilderWithoutConfigs extends ClientBuilder
 
     public static function mock(): Mock
     {
-        return new ClientMock(new MockPersister());
+        return (new ClientMock())->setPersister(new MockPersister());
     }
 }
