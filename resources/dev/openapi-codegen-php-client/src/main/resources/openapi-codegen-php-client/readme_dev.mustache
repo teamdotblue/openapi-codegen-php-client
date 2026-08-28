@@ -13,3 +13,12 @@ The custom generator will be built and launched using the following Open API spe
 You can then commit and PR the modified api-spec file and your endpoints code files.
 
 The client class and readme may be changed in some cases. Do not forget to include them in your commit!
+
+### Client per tag
+
+The client is split into one class per OpenAPI tag (e.g. a `Widgets` tag produces
+`WidgetsClient`/`WidgetsClientInterface`/`ApiWidgetsClientMock`), plus a generated
+`AbstractClientBuilder` with one accessor method per tag. Your project's own
+`ClientBuilder` (extending `AbstractClientBuilder`) needs one
+`createXxxClient()`/`createXxxMock()` pair per tag — see `AbstractClientBuilder.php`
+for the exact hook names to implement after regenerating.

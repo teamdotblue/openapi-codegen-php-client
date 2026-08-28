@@ -66,7 +66,7 @@ class ClientTest extends TestCase
             )
             ->willReturn($response);
 
-        $client = (new ClientBuilder($wrapper))->build();
+        $client = (new ClientBuilder($wrapper))->first();
         $clientResponse = $client->test();
 
         $this->assertEquals($return, $clientResponse);
@@ -74,7 +74,7 @@ class ClientTest extends TestCase
 
     public function testTestEndpointWithoutConfigs(): void
     {
-        $client = (new ClientBuilderWithoutConfigs(new NullClientWrapper()))->build();
+        $client = (new ClientBuilderWithoutConfigs(new NullClientWrapper()))->first();
         $clientResponse = $client->test();
 
         $this->assertIsArray($clientResponse);
@@ -94,7 +94,7 @@ class ClientTest extends TestCase
             )
             ->willReturn([]);
 
-        $client = (new ClientBuilder($wrapper))->build();
+        $client = (new ClientBuilder($wrapper))->first();
         $client->testWithEmptyBody();
     }
 
@@ -119,7 +119,7 @@ class ClientTest extends TestCase
             )
             ->willReturn([]);
 
-        $client = (new ClientBuilder($wrapper))->build();
+        $client = (new ClientBuilder($wrapper))->first();
         $client->testWithFileBody($file);
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Unit\Client;
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
 use TeamBlue\ClientMock\Mock;
 use TeamBlue\ClientMock\MockLogic;

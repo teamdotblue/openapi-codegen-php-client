@@ -9,10 +9,10 @@ use {{invokerPackage}}\Default\{{#lambda.pascalcase}}{{name}}{{/lambda.pascalcas
 {{#discriminator}}
 use TeamBlue\JsonImmutableObjects\Polymorphism\Discriminator;
 use TeamBlue\JsonImmutableObjects\Polymorphism\DiscriminatorLogic;{{/discriminator}}{{^discriminator}}
-use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
-use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
 use EventEngine\Data\SpecialKeySupport;
-use EventEngine\JsonSchema\JsonSchemaAwareRecord;{{/discriminator}}
+use EventEngine\JsonSchema\JsonSchemaAwareRecord;
+use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
+use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;{{/discriminator}}
 
 final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, JsonSchemaAwareRecord{{/discriminator}}{{#discriminator}} implements Discriminator{{/discriminator}}
 {
@@ -44,17 +44,20 @@ final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, Js
 // phpcs:disable SlevomatCodingStandard.Classes.UnusedPrivateElements.UnusedProperty
 // phpcs:disable Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
 {{#vars}}
-    /** @var {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
-        private ${{name}}{{#defaultValue}} = {{#isString}}'{{/isString}}{{{defaultValue}}}{{#isString}}'{{/isString}}{{/defaultValue}}{{^defaultValue}}{{#isNullable}} = null{{/isNullable}}{{^required}}{{^isNullable}} = null{{/isNullable}}{{/required}}{{/defaultValue}};
+    {{^vendorExtensions.x-has-vo-type}}{{^composedSchemas.anyOf}}{{#isContainer}}/** @var {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
+    {{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}/** @var {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
+    {{/isFreeFormObject}}{{/isContainer}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}}private {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} ${{name}}{{#defaultValue}} = {{#isString}}'{{/isString}}{{{defaultValue}}}{{#isString}}'{{/isString}}{{/defaultValue}}{{^defaultValue}}{{#isNullable}} = null{{/isNullable}}{{^required}}{{^isNullable}} = null{{/isNullable}}{{/required}}{{/defaultValue}};
 {{/vars}}
+
 {{#vars}}
-    /** @return {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
-    public function {{getter}}()
+    {{^vendorExtensions.x-has-vo-type}}{{^composedSchemas.anyOf}}{{#isContainer}}/** @return {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
+    {{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}/** @return {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isContainer}}<{{^items.complexType}}{{#items.isContainer}}mixed{{/items.isContainer}}{{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{/items.complexType}}{{#items.complexType}}{{{.}}}{{/items.complexType}}>{{/isContainer}}{{^isContainer}}{{#isFreeFormObject}}<mixed>{{/isFreeFormObject}}{{/isContainer}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}} */
+    {{/isFreeFormObject}}{{/isContainer}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}}public function {{getter}}(): {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{#composedSchemas.anyOf}}{{openApiType}}{{^-last}}|{{/-last}}{{/composedSchemas.anyOf}}{{^composedSchemas.anyOf}}{{#complexType}}{{^isContainer}}{{complexType}}{{/isContainer}}{{#isContainer}}{{baseType}}{{/isContainer}}{{/complexType}}{{^complexType}}{{baseType}}{{/complexType}}{{#isNullable}}|null{{/isNullable}}{{^required}}{{^isNullable}}|null{{/isNullable}}{{/required}}{{/composedSchemas.anyOf}}{{/vendorExtensions.x-has-vo-type}}
     {
         return $this->{{name}};
     }
-{{/vars}}
 
+{{/vars}}
     /** @return array<string, string> */
     private static function arrayPropItemTypeMap(): array
     {
@@ -76,9 +79,10 @@ final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, Js
     /** @return array<string,string> */
     public function keyMapping(): array
     {
-        return [{{#vars}}
-            '{{baseName}}' => '{{name}}',{{/vars}}
-        ];
+        return [{{^vars}}]{{/vars}}{{#vars}}
+            '{{baseName}}' => '{{name}}',{{/vars}}{{#vars.0}}
+        ]{{/vars.0}};
     }
+
 // phpcs:enable
 {{/discriminator}}}{{/model}}{{/models}}

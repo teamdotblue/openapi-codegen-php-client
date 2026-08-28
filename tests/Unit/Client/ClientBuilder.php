@@ -6,20 +6,41 @@ namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
 
 use TeamBlue\ClientMock\Mock;
 use TeamBlue\ClientMock\MockPersister;
-use Unit\Client\ClientMock;
+use TeamBlue\OpenApi\Codegen\ClientBuilder\UnknownClientTag;
 
 class ClientBuilder extends \TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilder
 {
-    public function build(): Client
+    public function first(): Client
     {
-        return new Client(
-            $this->client(),
-            $this->configs(__DIR__ . '/config.json'),
-        );
+        /** @var Client $client */
+        $client = $this->build(ClientInterface::TAG);
+
+        return $client;
     }
 
-    public static function mock(): Mock
+    public function second(): SecondClient
     {
-        return (new ClientMock())->setPersister(new MockPersister());
+        /** @var SecondClient $client */
+        $client =  $this->build(SecondClientInterface::TAG);
+
+        return $client;
+    }
+
+    protected function createClient(string $tag): \TeamBlue\OpenApi\Codegen\Client\Client
+    {
+        return match ($tag) {
+            ClientInterface::TAG => new Client($this->client(), $this->configs(__DIR__ . '/config.json')),
+            SecondClientInterface::TAG => new SecondClient($this->client(), $this->configs(__DIR__ . '/config.json')),
+            default => throw UnknownClientTag::forTag($tag),
+        };
+    }
+
+    public static function mock(string $tag): Mock
+    {
+        return match ($tag) {
+            ClientInterface::TAG => (new ClientMock())->setPersister(new MockPersister()),
+            SecondClientInterface::TAG => (new SecondClientMock())->setPersister(new MockPersister()),
+            default => throw UnknownClientTag::forTag($tag),
+        };
     }
 }

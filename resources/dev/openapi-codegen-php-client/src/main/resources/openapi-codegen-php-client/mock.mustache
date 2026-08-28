@@ -5,35 +5,34 @@ declare(strict_types=1);
 namespace {{invokerPackage}};
 
 use TeamBlue\ClientMock\Mock;
-use TeamBlue\ClientMock\MockLogic;{{#models}}{{#model}}
-use {{importPath}};{{/model}}{{/models}}
+use TeamBlue\ClientMock\MockLogic;
 
-final class Api{{clientClass}}Mock implements Mock
+final class Api{{classname}}{{clientClass}}Mock implements Mock
 {
     use MockLogic;
 
-    /** @return class-string<{{clientClass}}Interface> */
+    /** @return class-string<{{classname}}{{clientClass}}Interface> */
     public function mockInterface(): string
     {
-        return {{clientClass}}Interface::class;
-    }{{#apiInfo.apis}}{{#operations}}{{#operation}}
-
+        return {{classname}}{{clientClass}}Interface::class;
+    }
+{{#operations}}{{#operation}}
     /**
-     * @see Client::{{operationId}}(){{#pathParams}}
+     * @see {{classname}}{{clientClass}}::{{operationId}}(){{#pathParams}}
      * @param {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
      * @param {{#isContainer}}{{dataType}}<{{baseType}}>{{/isContainer}}{{^isContainer}}{{baseType}}{{#isMap}}<mixed>{{/isMap}}{{/isContainer}}{{^required}}|null{{/required}} $body{{/bodyParams.0}}
      */
     public function {{operationId}}({{#pathParams}}
         {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
-        {{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
+        \{{invokerPackage}}\Model\{{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}
-        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
+        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{#bodyParams.0.isModel}}\{{invokerPackage}}\Model\{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{^bodyParams.0.isModel}}{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{^queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{/bodyParams.0}}
-        {{formParams.0.baseType}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
+        {{#formParams.0.isModel}}\{{invokerPackage}}\Model\{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.isModel}}{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
     {{/formParams.0.isFormParam}}{{/formParams.0}}): self {
         ($this->persister)('{{operationId}}', ...func_get_args());
 
         return $this;
-    }{{/operation}}{{/operations}}{{/apiInfo.apis}}
-}
+    }
+{{/operation}}{{/operations}}}

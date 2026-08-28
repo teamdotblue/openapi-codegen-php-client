@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace {{invokerPackage}};
 
-use TeamBlue\ValueObjects\ValueObject;
-{{#models}}{{#model}}use {{importPath}};
-{{/model}}{{/models}}use TeamBlue\OpenApi\Codegen\Attribute\Endpoint as EndpointAttribute;
+use TeamBlue\OpenApi\Codegen\Attribute\Endpoint as EndpointAttribute;
 use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
 
 /**
@@ -14,8 +12,8 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
  * @SuppressWarnings("PHPMD.ExcessivePublicCount")
  * @SuppressWarnings("PHPMD.ExcessiveClassComplexity")
  */
-{{#clientClassQualifier}}{{{.}}} {{/clientClassQualifier}}class {{clientClass}} extends AbstractClient implements ClientInterface
-{{=<% %>=}}{<%#apiInfo%><%={{ }}=%>{{#apis}}{{#operations}}{{#operation}}
+{{#clientClassQualifier}}{{{.}}} {{/clientClassQualifier}}class {{classname}}{{clientClass}} extends AbstractClient implements {{classname}}{{clientClass}}Interface
+{{=<% %>=}}{<%={{ }}=%>{{#operations}}{{#operation}}
     /**
 {{#summary}}
      * {{.}}
@@ -34,21 +32,21 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
      *
      * @return {{^responses.0.schema}}mixed{{/responses.0.schema}}{{#responses.0.schema}}{{#responses.0.isArray}}array<{{responses.0.baseType}}>{{/responses.0.isArray}}{{#responses.0.primitiveType}}{{^responses.0.isArray}}{{responses.0.dataType}}{{#responses.0.isFreeFormObject}}<mixed>{{/responses.0.isFreeFormObject}}{{/responses.0.isArray}}{{/responses.0.primitiveType}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}
      */
-    #[EndpointAttribute(Endpoint\{{classname}}::class)]
+    #[EndpointAttribute(Endpoint\{{operationIdCamelCase}}::class)]
     {{vendorExtensions.x-operation-scope}} function {{operationId}}({{#pathParams}}
         {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
-        {{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
+        \{{invokerPackage}}\Model\{{operationIdCamelCase}}Query|null $query = null{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}
-        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{bodyParams.0.baseType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
+        {{#bodyParams.0.isContainer}}{{bodyParams.0.dataType}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.isContainer}}{{#bodyParams.0.isModel}}\{{invokerPackage}}\Model\{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{^bodyParams.0.isModel}}{{bodyParams.0.baseType}}{{/bodyParams.0.isModel}}{{/bodyParams.0.isContainer}}{{^bodyParams.0.required}}|null{{/bodyParams.0.required}} $body{{^bodyParams.0.required}} = null{{/bodyParams.0.required}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}{{#pathParams.0}},{{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{#bodyParams.0}}{{^queryParams.0}}{{^pathParams.0}},{{/pathParams.0}}{{/queryParams.0}}{{/bodyParams.0}}
-        {{formParams.0.baseType}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
-    {{/formParams.0.isFormParam}}{{/formParams.0}}){{#responses.0.schema}}: {{#responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{#responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}{{^pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
+        {{#formParams.0.isModel}}\{{invokerPackage}}\Model\{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.isModel}}{{formParams.0.baseType}}{{/formParams.0.isModel}}{{^formParams.0.required}}|null{{/formParams.0.required}} $form{{^formParams.0.required}} = null{{/formParams.0.required}}
+    {{/formParams.0.isFormParam}}{{/formParams.0}}){{#responses.0.schema}}: {{#responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{#responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.dataType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}\{{invokerPackage}}\Model\{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}{{^pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
    {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}} {
         {{#responses.0.schema}}
         /** @var {{#responses.0.primitiveType}}{{responses.0.dataType}}{{#responses.0.isFreeFormObject}}<mixed>{{/responses.0.isFreeFormObject}}{{#responses.0.isArray}}<{{responses.0.baseType}}>{{/responses.0.isArray}}{{/responses.0.primitiveType}}{{^responses.0.primitiveType}}array<string, {{#responses.0.isArray}}array<string, mixed>{{/responses.0.isArray}}{{^responses.0.isArray}}mixed{{/responses.0.isArray}}>{{/responses.0.primitiveType}} $response */{{/responses.0.schema}}
         $response = $this->performRequest(
-            Endpoint\{{classname}}::fromRecordData(
+            Endpoint\{{operationIdCamelCase}}::fromRecordData(
                 [{{#pathParams}}
                     '{{baseName}}' => ${{paramName}},{{/pathParams}}{{#queryParams.0}}
                     'query' => $query,{{/queryParams.0}}{{#bodyParams.0}}
@@ -59,8 +57,8 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
         );
 
         return {{#responses.0.isArray}}{{^responses.0.primitiveType}}array_map(
-            {{responses.0.baseType}}::fromArray(...),
+            \{{invokerPackage}}\Model\{{responses.0.baseType}}::fromArray(...),
             $response
-        ){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}::fromArray($response){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{#responses.0.primitiveType}}$response{{/responses.0.primitiveType}};
+        ){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}\{{invokerPackage}}\Model\{{responses.0.baseType}}::fromArray($response){{/responses.0.primitiveType}}{{/responses.0.isArray}}{{#responses.0.primitiveType}}$response{{/responses.0.primitiveType}};
     }
-{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}}
+{{/operation}}{{/operations}}}
