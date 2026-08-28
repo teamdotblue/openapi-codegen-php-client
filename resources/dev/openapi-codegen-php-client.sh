@@ -63,6 +63,8 @@ docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorima
                                                                --additional-properties=clients=true \
                                                                --global-property=apis,supportingFiles 1>/dev/null
 
+# Containers now run as the host user (see --user above), so generated files are
+# already owned correctly and no sudo chown is needed.
 # Exit code of phpcbf is 1 if all is fixed https://github.com/squizlabs/PHP_CodeSniffer/issues/2898
 cd "${rootdir}" && (vendor/bin/phpcbf --extensions=php ./*.php Model/ Endpoint/ Factory/ Default/ Client/ 1> /dev/null || true)
 cd "${rootdir}" && vendor/bin/rector --no-progress-bar --output-format=json
