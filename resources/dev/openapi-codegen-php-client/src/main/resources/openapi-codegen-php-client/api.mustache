@@ -68,7 +68,7 @@ class {{classname}} implements Endpoint, SpecialKeySupport
     private static function arrayPropItemTypeMap(): array
     {
         return [
-            'body' => {{#bodyParams.0.items.complexType}}{{{.}}}::class{{/bodyParams.0.items.complexType}},
+            'body' => {{#bodyParams.0.items.complexType}}\{{invokerPackage}}\Model\{{{.}}}::class{{/bodyParams.0.items.complexType}},
         ];
     }{{/bodyParams.0.isContainer}}
 {{/operation}}

@@ -16,12 +16,7 @@ return static function (RectorConfig $rectorConfig): void {
             __DIR__ . '/Model',
             __DIR__ . '/Factory',
             __DIR__ . '/ClientBuilder.php',
-            __DIR__ . '/AbstractClientBuilder.php',
-{{#apiInfo}}{{#apis}}
-            __DIR__ . '/{{classname}}{{clientClass}}.php',
-            __DIR__ . '/{{classname}}{{clientClass}}Interface.php',
-            __DIR__ . '/Api{{classname}}{{clientClass}}Mock.php',
-{{/apis}}{{/apiInfo}}
+            __DIR__ . '/Client',
         ],
     );
     $rectorConfig->phpVersion(PhpVersion::PHP_81);

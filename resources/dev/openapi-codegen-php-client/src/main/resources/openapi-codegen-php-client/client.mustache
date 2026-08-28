@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace {{invokerPackage}};
+namespace {{invokerPackage}}\Client;
 
 use TeamBlue\OpenApi\Codegen\Attribute\Endpoint as EndpointAttribute;
 use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
@@ -32,7 +32,7 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
      *
      * @return {{^responses.0.schema}}mixed{{/responses.0.schema}}{{#responses.0.schema}}{{#responses.0.isArray}}array<{{responses.0.baseType}}>{{/responses.0.isArray}}{{#responses.0.primitiveType}}{{^responses.0.isArray}}{{responses.0.dataType}}{{#responses.0.isFreeFormObject}}<mixed>{{/responses.0.isFreeFormObject}}{{/responses.0.isArray}}{{/responses.0.primitiveType}}{{^responses.0.isArray}}{{^responses.0.primitiveType}}{{responses.0.baseType}}{{/responses.0.primitiveType}}{{/responses.0.isArray}}{{/responses.0.schema}}
      */
-    #[EndpointAttribute(Endpoint\{{operationIdCamelCase}}::class)]
+    #[EndpointAttribute(\{{invokerPackage}}\Endpoint\{{operationIdCamelCase}}::class)]
     {{vendorExtensions.x-operation-scope}} function {{operationId}}({{#pathParams}}
         {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
     {{/formParams.0}}{{/bodyParams.0}}{{/queryParams.0}}{{/pathParams.0}}{{#queryParams.0}}{{#pathParams.0}},{{/pathParams.0}}
@@ -46,7 +46,7 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
         {{#responses.0.schema}}
         /** @var {{#responses.0.primitiveType}}{{responses.0.dataType}}{{#responses.0.isFreeFormObject}}<mixed>{{/responses.0.isFreeFormObject}}{{#responses.0.isArray}}<{{responses.0.baseType}}>{{/responses.0.isArray}}{{/responses.0.primitiveType}}{{^responses.0.primitiveType}}array<string, {{#responses.0.isArray}}array<string, mixed>{{/responses.0.isArray}}{{^responses.0.isArray}}mixed{{/responses.0.isArray}}>{{/responses.0.primitiveType}} $response */{{/responses.0.schema}}
         $response = $this->performRequest(
-            Endpoint\{{operationIdCamelCase}}::fromRecordData(
+            \{{invokerPackage}}\Endpoint\{{operationIdCamelCase}}::fromRecordData(
                 [{{#pathParams}}
                     '{{baseName}}' => ${{paramName}},{{/pathParams}}{{#queryParams.0}}
                     'query' => $query,{{/queryParams.0}}{{#bodyParams.0}}

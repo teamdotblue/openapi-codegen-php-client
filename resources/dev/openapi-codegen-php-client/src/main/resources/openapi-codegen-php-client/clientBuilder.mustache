@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace {{invokerPackage}};
+namespace {{invokerPackage}}\Client;
 
 use TeamBlue\ClientMock\Mock;
 use TeamBlue\OpenApi\Codegen\Client\Client;
@@ -19,8 +19,10 @@ abstract class AbstractClientBuilder extends ClientBuilder
 {{#apiInfo}}{{#apis}}
     public function {{#lambda.camelcase}}{{classname}}{{/lambda.camelcase}}(): {{classname}}{{clientClass}}Interface
     {
-        /** @var {{classname}}{{clientClass}}Interface */
-        return $this->build({{classname}}{{clientClass}}Interface::TAG);
+        /** @var {{classname}}{{clientClass}}Interface $client */
+        $client = $this->build({{classname}}{{clientClass}}Interface::TAG);
+
+        return $client;
     }
 
 {{/apis}}{{/apiInfo}}

@@ -91,9 +91,9 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         // Generated once per spec: one accessor + one createXxxClient()/createXxxMock()
         // hook pair per tag, dispatching to whatever client.mustache/mock.mustache
         // produced for that tag (see apiFilename()/addOperationToGroup() below).
-        supportingFiles.add(new SupportingFile("clientBuilder.mustache", "", "AbstractClientBuilder.php"));
-        // rector.php needs to list every generated {Tag}Client{,Interface,Mock}.php
-        // file by name, so it can only be rendered once tags are known (this pass).
+        supportingFiles.add(new SupportingFile("clientBuilder.mustache", "Client", "AbstractClientBuilder.php"));
+        // rector.php targets the whole Client/ directory, but is only written
+        // during this pass since that's when clientsMode's supportingFiles run.
         supportingFiles.add(new SupportingFile("rector.mustache", "", "rector.php"));
     } else {
         supportingFiles.add(new SupportingFile("readme.mustache", "", "README.md"));
@@ -278,7 +278,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
               return super.apiFilename(templateName, tag);
       }
 
-      return this.outputFolder() + File.separator + filename;
+      return this.outputFolder() + File.separator + "Client" + File.separator + filename;
   }
 
   @Override

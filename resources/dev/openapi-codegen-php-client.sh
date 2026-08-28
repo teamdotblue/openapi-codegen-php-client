@@ -21,6 +21,9 @@ rootdir=$(cd "${generatordir}/../../../../../" && pwd)
 
 cd "${generatordir}" && DOCKER_BUILDKIT=1 docker build --target runner -t ${generatorimage} openapi-codegen-php-client
 
+# Remove per-tag client files from before they were grouped under Client/.
+rm -f "${rootdir}/Client.php" "${rootdir}/ClientInterface.php" "${rootdir}/ClientMock.php" "${rootdir}/ApiClientMock.php" "${rootdir}/AbstractClientBuilder.php"
+
 if [ -x "${rootdir}/resources/scripts/before_run.sh" ]
 then
   "${rootdir}"/resources/scripts/before_run.sh
@@ -61,7 +64,7 @@ docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorima
                                                                --global-property=apis,supportingFiles 1>/dev/null
 
 # Exit code of phpcbf is 1 if all is fixed https://github.com/squizlabs/PHP_CodeSniffer/issues/2898
-cd "${rootdir}" && (vendor/bin/phpcbf --extensions=php ./*.php Model/ Endpoint/ Factory/ Default/ 1> /dev/null || true)
+cd "${rootdir}" && (vendor/bin/phpcbf --extensions=php ./*.php Model/ Endpoint/ Factory/ Default/ Client/ 1> /dev/null || true)
 cd "${rootdir}" && vendor/bin/rector --no-progress-bar --output-format=json
 
 if [ -x "${rootdir}/resources/scripts/after_run.sh" ]
