@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.collect.ImmutableMap;
+import com.samskivert.mustache.Mustache;
 
 public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements CodegenConfig {
   public static final String GENERATOR_NAME         = "openapi-codegen-php-client";
@@ -216,6 +218,24 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   @Override
   public String toApiName(String name) {
     return org.openapitools.codegen.utils.StringUtils.camelize(name);
+  }
+
+  // The built-in "lambda.camelcase" (CamelCaseAndSanitizeLambda) additionally
+  // escapes PHP reserved words (e.g. "default" -> "_default"), which is meant
+  // for contexts where a bare identifier can't be a keyword. PHP has allowed
+  // keywords as method names since PHP 7, so clientBuilder.mustache's tag
+  // accessor methods use this lambda instead to just lowercase the first
+  // character without that reserved-word escaping.
+  @Override
+  public ImmutableMap.Builder<String, Mustache.Lambda> addMustacheLambdas() {
+    return super.addMustacheLambdas()
+        .put("lowercaseFirst", (fragment, writer) -> {
+          String text = fragment.execute();
+          if (!text.isEmpty()) {
+            text = Character.toLowerCase(text.charAt(0)) + text.substring(1);
+          }
+          writer.write(text);
+        });
   }
 
   @Override
@@ -507,12 +527,22 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
   }
 
+  // DefaultCodegen's internal callers (fromModel(), etc.) all invoke the
+  // 3-arg overload directly, which never reaches the 2-arg one - overriding
+  // fromProperty(String, Schema) alone is silently never called.
   @Override
-  public CodegenProperty fromProperty(String name, Schema p) {
-      CodegenProperty property = super.fromProperty(name, p);
+  public CodegenProperty fromProperty(String name, Schema p, boolean required) {
+      CodegenProperty property = super.fromProperty(name, p, required);
 
       if (property.openApiType.equals("mixed")) {
         property.complexType = "mixed";
+
+        if (property.vendorExtensions == null) {
+            property.vendorExtensions = new HashMap<>();
+        }
+        // `mixed` already includes null, so model.mustache must not append "|null"
+        // to it (PHP: "Type mixed can only be used as a standalone type").
+        property.vendorExtensions.put("x-is-mixed-type", true);
       }
 
       if (p != null && p.getExtensions() != null) {

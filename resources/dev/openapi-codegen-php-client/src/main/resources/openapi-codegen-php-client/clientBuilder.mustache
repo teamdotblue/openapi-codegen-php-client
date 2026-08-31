@@ -17,7 +17,7 @@ use TeamBlue\OpenApi\Codegen\ClientBuilder\UnknownClientTag;
 abstract class AbstractClientBuilder extends ClientBuilder
 {
 {{#apiInfo}}{{#apis}}
-    public function {{#lambda.camelcase}}{{classname}}{{/lambda.camelcase}}(): {{classname}}{{clientClass}}Interface
+    public function {{#lambda.lowercaseFirst}}{{classname}}{{/lambda.lowercaseFirst}}(): {{classname}}{{clientClass}}Interface
     {
         $client = $this->build({{classname}}{{clientClass}}Interface::TAG);
         assert($client instanceof {{classname}}{{clientClass}}Interface);
