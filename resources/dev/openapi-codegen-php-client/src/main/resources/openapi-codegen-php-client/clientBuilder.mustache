@@ -7,7 +7,7 @@ namespace {{invokerPackage}}\Client;
 use TeamBlue\ClientMock\Mock;
 use TeamBlue\OpenApi\Codegen\Client\Client;
 use TeamBlue\OpenApi\Codegen\ClientBuilder\ClientBuilder;
-use TeamBlue\OpenApi\Codegen\ClientBuilder\UnknownClientTagException;
+use TeamBlue\OpenApi\Codegen\ClientBuilder\UnknownClientTag;
 
 /**
  * Generated once per spec: one accessor method per OpenAPI tag, dispatching
@@ -32,7 +32,7 @@ abstract class AbstractClientBuilder extends ClientBuilder
 {{#apiInfo}}{{#apis}}
             {{classname}}{{clientClass}}Interface::TAG => $this->create{{classname}}{{clientClass}}(),
 {{/apis}}{{/apiInfo}}
-            default => throw UnknownClientTagException::forTag($tag),
+            default => throw UnknownClientTag::forTag($tag),
         };
     }
 {{#apiInfo}}{{#apis}}
@@ -45,7 +45,7 @@ abstract class AbstractClientBuilder extends ClientBuilder
 {{#apiInfo}}{{#apis}}
             {{classname}}{{clientClass}}Interface::TAG => static::create{{classname}}{{clientClass}}Mock(),
 {{/apis}}{{/apiInfo}}
-            default => throw UnknownClientTagException::forTag($tag),
+            default => throw UnknownClientTag::forTag($tag),
         };
     }
 {{#apiInfo}}{{#apis}}
