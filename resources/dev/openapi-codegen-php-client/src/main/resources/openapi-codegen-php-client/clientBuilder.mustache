@@ -26,6 +26,9 @@ abstract class AbstractClientBuilder extends ClientBuilder
     }
 
 {{/apis}}{{/apiInfo}}
+    /**
+     * @SuppressWarnings("PHPMD.ExcessiveMethodLength")
+     */
     final protected function createClient(string $tag): Client
     {
         return match ($tag) {
@@ -39,6 +42,9 @@ abstract class AbstractClientBuilder extends ClientBuilder
     abstract protected function create{{classname}}{{clientClass}}(): {{classname}}{{clientClass}};
 {{/apis}}{{/apiInfo}}
 
+    /**
+     * @SuppressWarnings("PHPMD.ExcessiveMethodLength")
+     */
     final public static function mock(string $tag): Mock
     {
         return match ($tag) {

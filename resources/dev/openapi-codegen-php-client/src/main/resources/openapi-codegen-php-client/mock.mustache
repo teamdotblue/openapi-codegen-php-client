@@ -20,7 +20,7 @@ final class Api{{classname}}{{clientClass}}Mock implements Mock
     /**
      * @see {{classname}}{{clientClass}}::{{operationId}}(){{#pathParams}}
      * @param {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{#isContainer}}<{{baseType}}>{{/isContainer}}{{/vendorExtensions.x-has-vo-type}}{{^required}}|null{{/required}} ${{paramName}}{{/pathParams}}{{#bodyParams.0}}
-     * @param {{#isContainer}}{{dataType}}<{{baseType}}>{{/isContainer}}{{^isContainer}}{{baseType}}{{#isMap}}<mixed>{{/isMap}}{{/isContainer}}{{^required}}|null{{/required}} $body{{/bodyParams.0}}
+     * @param {{#isContainer}}{{dataType}}<{{#items.isModel}}\{{invokerPackage}}\Model\{{/items.isModel}}{{baseType}}>{{/isContainer}}{{^isContainer}}{{#isModel}}\{{invokerPackage}}\Model\{{/isModel}}{{baseType}}{{#isMap}}<mixed>{{/isMap}}{{/isContainer}}{{^required}}|null{{/required}} $body{{/bodyParams.0}}
      */
     public function {{operationId}}({{#pathParams}}
         {{#vendorExtensions.x-has-vo-type}}\{{{vendorExtensions.x-vo-type}}}{{/vendorExtensions.x-has-vo-type}}{{^vendorExtensions.x-has-vo-type}}{{dataType}}{{/vendorExtensions.x-has-vo-type}} ${{paramName}}{{^required}} = {{#defaultValue}}{{{.}}}{{/defaultValue}}{{^defaultValue}}null{{/defaultValue}}{{/required}}{{^-last}},{{/-last}}{{/pathParams}}{{#pathParams.0}}{{^queryParams.0}}{{^bodyParams.0}}{{^formParams.0}}
