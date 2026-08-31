@@ -12,7 +12,7 @@ final class {{classFilename}} extends {{vendorExtensions.x-vo-base-class-short}}
 {
 {{#isEnum}}
 {{#allowableValues}}{{#enumVars}}
-    final public const {{name}} = {{{value}}};
+    public const {{name}} = {{{value}}};
 {{/enumVars}}{{/allowableValues}}
 
     /** @inheritDoc */
