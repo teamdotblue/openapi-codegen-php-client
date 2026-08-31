@@ -5,6 +5,57 @@ declare(strict_types=1);
 
 namespace {{modelPackage}};
 {{#model}}
+{{#vendorExtensions.x-is-value-object}}
+use {{vendorExtensions.x-vo-base-class}};
+
+final class {{classFilename}} extends {{vendorExtensions.x-vo-base-class-short}}
+{
+{{#isEnum}}
+{{#allowableValues}}{{#enumVars}}
+    final public const {{name}} = {{{value}}};
+{{/enumVars}}{{/allowableValues}}
+
+    /** @inheritDoc */
+    public static function possibleValues(): array
+    {
+        return [{{#allowableValues}}{{#enumVars}}
+            self::{{name}},{{/enumVars}}{{/allowableValues}}
+        ];
+    }
+{{/isEnum}}
+{{^isEnum}}
+{{#vendorExtensions.x-vo-needs-pattern-override}}
+    public static function pattern(): string
+    {
+        return '{{vendorExtensions.x-vo-pattern}}';
+    }
+{{/vendorExtensions.x-vo-needs-pattern-override}}
+{{#vendorExtensions.x-vo-needs-range-override}}
+{{#vendorExtensions.x-vo-minimum}}
+    public static function minimum(): {{#isInteger}}int{{/isInteger}}{{^isInteger}}float{{/isInteger}}
+    {
+        return {{vendorExtensions.x-vo-minimum}};
+    }
+
+{{/vendorExtensions.x-vo-minimum}}
+{{#vendorExtensions.x-vo-maximum}}
+    public static function maximum(): {{#isInteger}}int{{/isInteger}}{{^isInteger}}float{{/isInteger}}
+    {
+        return {{vendorExtensions.x-vo-maximum}};
+    }
+
+{{/vendorExtensions.x-vo-maximum}}
+{{^vendorExtensions.x-vo-included}}
+    public static function included(): bool
+    {
+        return false;
+    }
+{{/vendorExtensions.x-vo-included}}
+{{/vendorExtensions.x-vo-needs-range-override}}
+{{/isEnum}}
+}
+{{/vendorExtensions.x-is-value-object}}
+{{^vendorExtensions.x-is-value-object}}
 use {{invokerPackage}}\Default\{{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}}Default;
 {{#discriminator}}
 use TeamBlue\JsonImmutableObjects\Polymorphism\Discriminator;
@@ -85,4 +136,5 @@ final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, Js
     }
 
 // phpcs:enable
-{{/discriminator}}}{{/model}}{{/models}}
+{{/discriminator}}}
+{{/vendorExtensions.x-is-value-object}}{{/model}}{{/models}}

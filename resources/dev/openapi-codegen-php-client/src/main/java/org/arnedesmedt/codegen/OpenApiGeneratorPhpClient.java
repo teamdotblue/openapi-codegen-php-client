@@ -45,6 +45,24 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   public static final String CLIENT_CLASS_QUALIFIER = "clientClassQualifier";
   public static final String CLIENTS_MODE           = "clients";
 
+  // OpenAPI string `format` values that map onto a ready-made, zero-config
+  // team-blue/php-value-objects base class (no generated method overrides needed).
+  private static final Map<String, String> STRING_FORMAT_VALUE_OBJECTS = new HashMap<>();
+
+  static {
+    STRING_FORMAT_VALUE_OBJECTS.put("uuid", "TeamBlue\\ValueObjects\\Implementation\\String\\UuidValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("email", "TeamBlue\\ValueObjects\\Implementation\\String\\EmailValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("hostname", "TeamBlue\\ValueObjects\\Implementation\\String\\HostnameValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("uri", "TeamBlue\\ValueObjects\\Implementation\\String\\UriValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("url", "TeamBlue\\ValueObjects\\Implementation\\String\\UrlValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("ipv4", "TeamBlue\\ValueObjects\\Implementation\\String\\IpV4Value");
+    STRING_FORMAT_VALUE_OBJECTS.put("ipv6", "TeamBlue\\ValueObjects\\Implementation\\String\\IpV6Value");
+    STRING_FORMAT_VALUE_OBJECTS.put("byte", "TeamBlue\\ValueObjects\\Implementation\\String\\Base64EncodedStringValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("date-time", "TeamBlue\\ValueObjects\\Implementation\\String\\DateTimeValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("date", "TeamBlue\\ValueObjects\\Implementation\\String\\DateTimeValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("password", "TeamBlue\\ValueObjects\\Implementation\\String\\SensitiveValue");
+  }
+
   private boolean clientsMode = false;
 
   public OpenApiGeneratorPhpClient() {
@@ -381,6 +399,114 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
       return super.toModelName(name);
   }
 
+  // Non-object schemas (enum, pattern, numeric range, recognized string format, or
+  // explicitly opted in via x-value-object) are rendered by model.mustache as a
+  // team-blue/php-value-objects subclass instead of the usual JsonSchemaAwareRecord.
+  // DefaultCodegen would otherwise silently skip generating a file for most of these
+  // (isAlias=true), so eligible models are un-aliased here to force file generation.
+  @Override
+  public CodegenModel fromModel(String name, Schema schema) {
+    CodegenModel model = super.fromModel(name, schema);
+
+    if (model.vendorExtensions == null) {
+      model.vendorExtensions = new HashMap<>();
+    }
+
+    if (!isValueObjectModel(model)) {
+      return model;
+    }
+
+    model.isAlias = false;
+    model.vendorExtensions.put("x-is-value-object", true);
+
+    String baseClass = resolveValueObjectBaseClass(model);
+    model.vendorExtensions.put("x-vo-base-class", baseClass);
+    model.vendorExtensions.put("x-vo-base-class-short", baseClass.substring(baseClass.lastIndexOf('\\') + 1));
+
+    if (!model.isEnum) {
+      applyValueObjectOverrides(model, baseClass);
+    }
+
+    return model;
+  }
+
+  // NOTE: pattern/minimum/maximum/exclusiveMinimum/exclusiveMaximum/format come from
+  // the IJsonSchemaValidationProperties interface CodegenModel implements and are
+  // only exposed via getters (no matching public fields) - confirmed against the
+  // openapi-generator-7.21.0 javadoc. isString/isInteger/isNumber/isBoolean/isEnum
+  // remain plain public fields as elsewhere in this class.
+  private boolean isValueObjectModel(CodegenModel model) {
+    if (model.isEnum) {
+      return true;
+    }
+
+    // Recognized formats (uuid, email, ...) get their own upstream code path that
+    // skips updateModelForString(), so isString is NOT set for them - checked
+    // independently of the isString/isInteger/... gate below instead of relying on it.
+    if (model.getFormat() != null && STRING_FORMAT_VALUE_OBJECTS.containsKey(model.getFormat())) {
+      return true;
+    }
+
+    boolean hasConstraint = model.getPattern() != null || model.getMinimum() != null || model.getMaximum() != null;
+    boolean explicitlyRequested = Boolean.TRUE.equals(model.vendorExtensions.get("x-value-object"));
+
+    return (hasConstraint || explicitlyRequested)
+        && (model.isString || model.isInteger || model.isNumber || model.isBoolean);
+  }
+
+  private String resolveValueObjectBaseClass(CodegenModel model) {
+    if (model.isEnum) {
+      return model.isString
+          ? "TeamBlue\\ValueObjects\\Implementation\\Enum\\StringEnumValue"
+          : "TeamBlue\\ValueObjects\\Implementation\\Enum\\IntEnumValue";
+    }
+
+    if (model.getFormat() != null && STRING_FORMAT_VALUE_OBJECTS.containsKey(model.getFormat())) {
+      return STRING_FORMAT_VALUE_OBJECTS.get(model.getFormat());
+    }
+
+    if (model.getPattern() != null) {
+      return "TeamBlue\\ValueObjects\\Implementation\\String\\PatternValue";
+    }
+
+    if (model.getMinimum() != null || model.getMaximum() != null) {
+      return model.isInteger
+          ? "TeamBlue\\ValueObjects\\Implementation\\Int\\RangeValue"
+          : "TeamBlue\\ValueObjects\\Implementation\\Float\\FloatRangeValue";
+    }
+
+    if (model.isString) {
+      return "TeamBlue\\ValueObjects\\Implementation\\String\\StringValue";
+    }
+
+    if (model.isInteger) {
+      return "TeamBlue\\ValueObjects\\Implementation\\Int\\IntValue";
+    }
+
+    if (model.isBoolean) {
+      return "TeamBlue\\ValueObjects\\Implementation\\Bool\\BoolValue";
+    }
+
+    return "TeamBlue\\ValueObjects\\Implementation\\Float\\FloatValue";
+  }
+
+  private void applyValueObjectOverrides(CodegenModel model, String baseClass) {
+    boolean isPatternClass = baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\String\\PatternValue");
+    if (isPatternClass && model.getPattern() != null) {
+      model.vendorExtensions.put("x-vo-needs-pattern-override", true);
+      model.vendorExtensions.put("x-vo-pattern", model.getPattern().replace("\\", "\\\\").replace("'", "\\'"));
+    }
+
+    boolean isRangeClass = baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\Int\\RangeValue")
+        || baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\Float\\FloatRangeValue");
+    if (isRangeClass) {
+      model.vendorExtensions.put("x-vo-needs-range-override", true);
+      model.vendorExtensions.put("x-vo-minimum", model.getMinimum());
+      model.vendorExtensions.put("x-vo-maximum", model.getMaximum());
+      model.vendorExtensions.put("x-vo-included", !(model.getExclusiveMinimum() || model.getExclusiveMaximum()));
+    }
+  }
+
   @Override
   public CodegenProperty fromProperty(String name, Schema p) {
       CodegenProperty property = super.fromProperty(name, p);
@@ -623,6 +749,37 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         model.parentVars.removeAll(varsToRemove);
 
         return objs;
+  }
+
+  // Default.php ("...Default" trait, default(): self stub) and Factory.php
+  // (fromArray()/fromRecordData() via FactoryFromArray) don't apply to a value
+  // object: there's no array data to hydrate a scalar/enum from. Strip value-object
+  // models from the map only during those two dedicated passes; the plain Model/
+  // pass (which has neither key set) must still emit Model/{Name}.php for them.
+  @Override
+  public Map<String, ModelsMap> postProcessAllModels(Map<String, ModelsMap> objs) {
+    objs = super.postProcessAllModels(objs);
+
+    if (!additionalProperties.containsKey("factories") && !additionalProperties.containsKey("defaults")) {
+      return objs;
+    }
+
+    Map<String, ModelsMap> processedModels = objs;
+    Map<String, ModelsMap> filtered = new HashMap<>(objs);
+    filtered.keySet().removeIf(modelName -> {
+      List<ModelMap> models = processedModels.get(modelName).getModels();
+      if (models == null || models.isEmpty()) {
+        return false;
+      }
+
+      CodegenModel model = models.get(0).getModel();
+
+      return model != null
+          && model.vendorExtensions != null
+          && Boolean.TRUE.equals(model.vendorExtensions.get("x-is-value-object"));
+    });
+
+    return filtered;
   }
 
   private void resetTemplateFiles() {
