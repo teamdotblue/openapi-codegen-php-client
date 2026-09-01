@@ -3,7 +3,6 @@ package org.teamblue.codegen;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Schema;
@@ -893,16 +892,17 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
       return super.toDefaultValue(schema);
     }
 
-    ArraySchema arraySchema = (ArraySchema) schema;
-    ArrayNode arrayNode = (ArrayNode) arraySchema.getDefault();
-    if (arraySchema.getItems() != null
-         && arrayNode.isEmpty() == false
-         && ModelUtils.isStringSchema(arraySchema.getItems())
+    Object defaultValue = schema.getDefault();
+    boolean isEmpty = (defaultValue instanceof ArrayNode && ((ArrayNode) defaultValue).isEmpty())
+         || (defaultValue instanceof Collection && ((Collection<?>) defaultValue).isEmpty());
+    if (schema.getItems() != null
+         && isEmpty == false
+         && ModelUtils.isStringSchema(schema.getItems())
     ) {
-        return arraySchema.getDefault().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
+        return defaultValue.toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
     }
 
-    return arraySchema.getDefault().toString();
+    return defaultValue.toString();
   }
 
   // added because uploading file parameters give problems
