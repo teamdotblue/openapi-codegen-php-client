@@ -45,6 +45,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
   public static final String CLIENT_CLASS           = "clientClass";
   public static final String CLIENT_CLASS_QUALIFIER = "clientClassQualifier";
   public static final String CLIENTS_MODE           = "clients";
+  public static final String INTERNAL               = "internal";
 
   // OpenAPI string `format` values that map onto a ready-made, zero-config
   // team-blue/php-value-objects base class (no generated method overrides needed).
@@ -72,6 +73,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     cliOptions.add(new CliOption(HELP_URL, "Help URL"));
     cliOptions.add(new CliOption(COPYRIGHT, "Copyright"));
     cliOptions.add(new CliOption(CLIENT_CLASS, "Client file"));
+    cliOptions.add(CliOption.newBoolean(INTERNAL, "Whether the generated package is for internal team.blue use (Combell coding standard, private Packeton registry) rather than public/external use (Doctrine coding standard, no private registry)", true));
 
     typeMapping.put("date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
     typeMapping.put("Date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
@@ -98,6 +100,13 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     if (clientClass.startsWith("Abstract")) {
       additionalProperties.put(CLIENT_CLASS_QUALIFIER, "abstract");
     }
+
+    // Written back as a real Boolean (not a String) so {{#internal}}/{{^internal}}
+    // mustache sections evaluate correctly regardless of whether config.json passed
+    // a JSON boolean or a string.
+    boolean internal = !additionalProperties.containsKey(INTERNAL)
+        || Boolean.parseBoolean(additionalProperties.get(INTERNAL).toString());
+    additionalProperties.put(INTERNAL, internal);
 
     this.resetTemplateFiles();
 

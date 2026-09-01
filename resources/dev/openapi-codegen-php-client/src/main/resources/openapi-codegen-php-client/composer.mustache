@@ -17,19 +17,26 @@
     },
     "require-dev": {
         "team-blue/php-client-mock": "^2.0",
+{{#internal}}
         "combell/platforms-php-coding-standard": "^3.0",
+{{/internal}}
+{{^internal}}
+        "doctrine/coding-standard": "~11.0",
+{{/internal}}
         "phpmd/phpmd": "~2.0",
         "phpro/grumphp": "~2.0",
         "phpstan/phpstan": "~2.0",
         "rector/rector": "~2.0",
         "squizlabs/php_codesniffer": "~3.0"
     },
+{{#internal}}
     "repositories": {
          "packeton.teamblue-ops.net": {
             "type": "composer",
             "url": "https://packeton.teamblue-ops.net"
         }
     },
+{{/internal}}
     "autoload": {
         "psr-4": {
             "{{composerPackage}}\\": ""
