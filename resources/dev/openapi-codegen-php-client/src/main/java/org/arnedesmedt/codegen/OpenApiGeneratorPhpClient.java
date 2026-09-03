@@ -893,6 +893,16 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
 
     if (ModelUtils.isStringSchema(schema)) {
+        // An explicit `"default": null` on a nullable string schema (e.g. Swagger 2.0's
+        // `x-nullable: true, default: null`) parses to a non-Java-null sentinel whose
+        // toString() is the literal text "null" rather than schema.getDefault() == null.
+        // Returning Java null here (rather than delegating to super, which has the same
+        // quoting behavior) tells the template there is no default, so its null-handling
+        // branch applies instead of emitting the PHP string 'null' as the default value.
+        if ("null".equals(schema.getDefault().toString())) {
+            return null;
+        }
+
         // escape single quotes in schema.getDefault().toString()
         return schema.getDefault().toString().replace("'", "\\'");
     }
