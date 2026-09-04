@@ -17,6 +17,7 @@ import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.function.Function;
@@ -243,6 +244,21 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
             text = Character.toLowerCase(text.charAt(0)) + text.substring(1);
           }
           writer.write(text);
+        })
+        // schema.getMaximum()/getMinimum() are BigDecimal; for a round number with
+        // trailing zeros (e.g. 102400), BigDecimal#toString() can switch to scientific
+        // notation (e.g. "1.024E+5") once the value's canonical unscaled/scale
+        // representation ends up with a negative scale. That's invalid where the
+        // template emits it as a bare PHP numeric literal, so route these through
+        // BigDecimal#toPlainString(), which never uses scientific notation, instead of
+        // relying on whatever default toString() the upstream codegen already put there.
+        .put("plainnumber", (fragment, writer) -> {
+          String text = fragment.execute();
+          try {
+            writer.write(new BigDecimal(text).toPlainString());
+          } catch (NumberFormatException e) {
+            writer.write(text);
+          }
         });
   }
 
@@ -842,8 +858,43 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     return value;
   }
 
+  // A bare passthrough here (returning `value` as-is) produces invalid PHP constant
+  // names for any enum value containing characters that aren't valid in a PHP
+  // identifier (spaces, hyphens, ...), e.g. "Private VLAN" -> `public const Private VLAN`.
+  // Sanitize into UPPER_SNAKE_CASE instead, matching what a hand-written const name
+  // for that value would look like (e.g. "poweredOn" -> POWERED_ON, "Private VLAN" ->
+  // PRIVATE_VLAN). This only affects the constant *name*; toEnumValue() (not overridden
+  // here, so it keeps the base class's default) still renders the original value string.
   @Override
-  public String toEnumVarName(String value, String datatype) { return value; }
+  public String toEnumVarName(String value, String datatype) {
+    if (value.isEmpty()) {
+      return "EMPTY";
+    }
+
+    // Insert an underscore at camelCase word boundaries (guestPowerOff -> guest_Power_Off)
+    // before the non-alphanumeric cleanup below, so word boundaries aren't lost once
+    // everything is uppercased.
+    String withWordBoundaries = value.replaceAll("([a-z0-9])([A-Z])", "$1_$2");
+
+    // Collapse any run of non-alphanumeric characters (spaces, hyphens, ...) into a
+    // single underscore, then trim leftover leading/trailing underscores.
+    String sanitized = withWordBoundaries.replaceAll("[^a-zA-Z0-9]+", "_")
+        .replaceAll("^_+", "")
+        .replaceAll("_+$", "");
+
+    if (sanitized.isEmpty()) {
+      return "EMPTY";
+    }
+
+    String upper = sanitized.toUpperCase(Locale.ROOT);
+
+    // A leading digit is not a valid PHP identifier start.
+    if (Character.isDigit(upper.charAt(0))) {
+      upper = "_" + upper;
+    }
+
+    return upper;
+  }
 
   @Override
   public boolean isDataTypeString(String dataType) {

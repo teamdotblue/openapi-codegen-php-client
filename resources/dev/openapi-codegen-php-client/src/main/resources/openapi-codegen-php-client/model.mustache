@@ -34,14 +34,14 @@ final class {{classFilename}} extends {{vendorExtensions.x-vo-base-class-short}}
 {{#vendorExtensions.x-vo-minimum}}
     public static function minimum(): {{#isInteger}}int{{/isInteger}}{{^isInteger}}float{{/isInteger}}
     {
-        return {{vendorExtensions.x-vo-minimum}};
+        return {{#lambda.plainnumber}}{{vendorExtensions.x-vo-minimum}}{{/lambda.plainnumber}};
     }
 
 {{/vendorExtensions.x-vo-minimum}}
 {{#vendorExtensions.x-vo-maximum}}
     public static function maximum(): {{#isInteger}}int{{/isInteger}}{{^isInteger}}float{{/isInteger}}
     {
-        return {{vendorExtensions.x-vo-maximum}};
+        return {{#lambda.plainnumber}}{{vendorExtensions.x-vo-maximum}}{{/lambda.plainnumber}};
     }
 
 {{/vendorExtensions.x-vo-maximum}}
@@ -123,7 +123,7 @@ final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, Js
     private static function maxValues(): array
     {
         return [{{#vars}}{{#maximum}}
-            '{{name}}' => {{maximum}},{{/maximum}}{{/vars}}
+            '{{name}}' => {{#lambda.plainnumber}}{{maximum}}{{/lambda.plainnumber}},{{/maximum}}{{/vars}}
         ];
     }
 
