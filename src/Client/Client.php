@@ -17,9 +17,14 @@ use function array_key_exists;
 use function array_map;
 use function array_shift;
 use function file_get_contents;
+use function http_build_query;
+use function implode;
 use function is_array;
 use function is_string;
 use function sprintf;
+use function str_contains;
+
+use const PHP_QUERY_RFC3986;
 
 /** @SuppressWarnings("PHPMD.CyclomaticComplexity") */
 abstract class Client
@@ -47,6 +52,15 @@ abstract class Client
         $method = $endpoint->method();
         $uri = $endpoint->uri();
         $options = $this->buildOptions($endpoint);
+
+        if (isset($options['query']) && is_array($options['query'])) {
+            $queryString = $this->buildQueryString($options['query']);
+            unset($options['query']);
+
+            if ($queryString !== '') {
+                $uri .= (str_contains($uri, '?') ? '&' : '?') . $queryString;
+            }
+        }
 
         try {
             $response = $this->client->request($method, $uri, $options);
@@ -189,5 +203,33 @@ abstract class Client
         }
 
         return ArrayUtil::removeSuffixFromKeys($data, '[]');
+    }
+
+    /**
+     * OpenAPI's default (and near-universal) query param serialization for arrays is
+     * style=form, explode=true: repeat the bare key per value (`tag=a&tag=b`), not the
+     * `tag[0]=a&tag[1]=b` PHP array-in-query convention that Guzzle/Symfony fall back to
+     * when handed a nested array. Building the string ourselves, one key at a time, keeps
+     * every other value type on the exact encoding http_build_query already produced.
+     *
+     * @param array<mixed> $data
+     */
+    private function buildQueryString(array $data): string
+    {
+        $pairs = [];
+
+        foreach ($data as $key => $value) {
+            if (is_array($value) && ! ArrayUtil::isAssociative($value)) {
+                foreach ($value as $item) {
+                    $pairs[] = http_build_query([$key => $item], '', '&', PHP_QUERY_RFC3986);
+                }
+
+                continue;
+            }
+
+            $pairs[] = http_build_query([$key => $value], '', '&', PHP_QUERY_RFC3986);
+        }
+
+        return implode('&', $pairs);
     }
 }

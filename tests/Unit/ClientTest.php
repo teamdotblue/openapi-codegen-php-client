@@ -64,8 +64,8 @@ class ClientTest extends TestCase
             ->method('request')
             ->with(
                 'GET',
-                'test/1',
-                ['query' => ['testQuery' => 'ziezo']],
+                'test/1?testQuery=ziezo',
+                [],
             )
             ->willReturn($response);
 
@@ -73,6 +73,23 @@ class ClientTest extends TestCase
         $clientResponse = $client->test();
 
         $this->assertEquals($return, $clientResponse);
+    }
+
+    public function testTestEndpointWithArrayQueryParamExplodesIntoRepeatedKeys(): void
+    {
+        $wrapper = $this->createMock(NullClientWrapper::class);
+        $wrapper
+            ->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                'test/1?testQuery=ziezo&arrayQuery=a&arrayQuery=b',
+                [],
+            )
+            ->willReturn([]);
+
+        $client = (new ClientBuilder($wrapper))->first();
+        $client->testWithArrayQuery();
     }
 
     public function testTestEndpointWithoutConfigs(): void

@@ -19,8 +19,6 @@ use function sprintf;
 use function str_replace;
 use function strval;
 
-// todo handle array query parameters with [] suffix
-
 /**
  * @property string $method
  * @property string $uri
