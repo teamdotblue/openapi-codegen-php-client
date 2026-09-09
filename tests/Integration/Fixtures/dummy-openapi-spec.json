@@ -50,6 +50,17 @@
                                 "schema": {"$ref": "#/components/schemas/Widget"}
                             }
                         }
+                    },
+                    "409": {
+                        "description": "A widget with this name already exists.",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/WidgetNameAlreadyExists"}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input, no typed schema declared for it."
                     }
                 }
             }
@@ -101,6 +112,30 @@
                 "type": "object",
                 "properties": {
                     "@id": {"type": "string"}
+                }
+            },
+            "WidgetNameAlreadyExists": {
+                "type": "object",
+                "required": ["type", "title", "detail", "context", "status", "metadata"],
+                "properties": {
+                    "type": {"type": "string", "default": "/problem/widget-name-already-exists"},
+                    "title": {"type": "string", "default": "Widget name already exists"},
+                    "detail": {"type": "string", "default": "A widget named '{name}' already exists."},
+                    "context": {
+                        "type": "object",
+                        "required": ["name"],
+                        "properties": {
+                            "name": {"type": "string"}
+                        }
+                    },
+                    "status": {"type": "integer", "default": 409},
+                    "metadata": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "requestId": {"type": "string", "nullable": true}
+                        }
+                    }
                 }
             }
         }

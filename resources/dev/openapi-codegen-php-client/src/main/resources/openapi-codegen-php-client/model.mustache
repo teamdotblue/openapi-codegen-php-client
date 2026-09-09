@@ -62,13 +62,13 @@ use TeamBlue\JsonImmutableObjects\Polymorphism\Discriminator;
 use TeamBlue\JsonImmutableObjects\Polymorphism\DiscriminatorLogic;{{/discriminator}}{{^discriminator}}
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
-use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
-use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;{{/discriminator}}
+use TeamBlue\OpenApi\Codegen\Endpoint\SpecialKeySupportLogic;
+{{#vendorExtensions.x-is-exception}}use TeamBlue\OpenApi\Codegen\Exception\ProblemDetailsExceptionLogic;{{/vendorExtensions.x-is-exception}}{{^vendorExtensions.x-is-exception}}use TeamBlue\JsonImmutableObjects\JsonSchemaAwareRecordLogic;{{/vendorExtensions.x-is-exception}}{{/discriminator}}
 
-final class {{classFilename}}{{^discriminator}} implements SpecialKeySupport, JsonSchemaAwareRecord{{/discriminator}}{{#discriminator}} implements Discriminator{{/discriminator}}
+final class {{classFilename}}{{^discriminator}}{{#vendorExtensions.x-is-exception}} extends \Exception{{/vendorExtensions.x-is-exception}} implements SpecialKeySupport, JsonSchemaAwareRecord{{/discriminator}}{{#discriminator}} implements Discriminator{{/discriminator}}
 {
     use {{classFilename}}Default;
-    {{^discriminator}}use JsonSchemaAwareRecordLogic;
+    {{^discriminator}}{{#vendorExtensions.x-is-exception}}use ProblemDetailsExceptionLogic;{{/vendorExtensions.x-is-exception}}{{^vendorExtensions.x-is-exception}}use JsonSchemaAwareRecordLogic;{{/vendorExtensions.x-is-exception}}
     use SpecialKeySupportLogic;{{/discriminator}}{{#discriminator}}use DiscriminatorLogic;
 
     public static function propertyName(): string

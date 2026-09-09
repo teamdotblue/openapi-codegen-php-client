@@ -53,7 +53,10 @@ use TeamBlue\OpenApi\Codegen\Client\Client as AbstractClient;
                     'body' => $body,{{/bodyParams.0}}{{#formParams.0}}{{#formParams.0.isFormParam}}
                     'form' => $form,{{/formParams.0.isFormParam}}{{/formParams.0}}
                 ],
-            ),
+            ),{{#vendorExtensions.x-exception-mapping}}
+            [{{#vendorExtensions.x-exception-mapping}}
+                '{{type}}' => \{{invokerPackage}}\Model\{{exceptionClass}}::class,{{/vendorExtensions.x-exception-mapping}}
+            ],{{/vendorExtensions.x-exception-mapping}}
         );
 
         return {{#responses.0.isArray}}{{^responses.0.primitiveType}}array_map(

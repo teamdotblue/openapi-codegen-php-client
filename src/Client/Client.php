@@ -8,14 +8,17 @@ use Closure;
 use EventEngine\Data\ImmutableRecord;
 use RuntimeException;
 use SplFileObject;
+use TeamBlue\OpenApi\Codegen\Client\Exception\ErrorResponse;
 use TeamBlue\OpenApi\Codegen\Endpoint\Endpoint;
 use TeamBlue\Util\ArrayUtil;
+use Throwable;
 
 use function array_key_exists;
 use function array_map;
 use function array_shift;
 use function file_get_contents;
 use function is_array;
+use function is_string;
 use function sprintf;
 
 /** @SuppressWarnings("PHPMD.CyclomaticComplexity") */
@@ -38,19 +41,45 @@ abstract class Client
     ) {
     }
 
-    protected function performRequest(Endpoint $endpoint): mixed
+    /** @param array<string, class-string<Throwable>> $exceptionMapping */
+    protected function performRequest(Endpoint $endpoint, array $exceptionMapping = []): mixed
     {
         $method = $endpoint->method();
         $uri = $endpoint->uri();
         $options = $this->buildOptions($endpoint);
 
-        $response = $this->client->request($method, $uri, $options);
+        try {
+            $response = $this->client->request($method, $uri, $options);
+        } catch (ErrorResponse $exception) {
+            throw $this->translateErrorResponse($exception, $exceptionMapping);
+        }
 
         if (($this->configs['transformHal'] ?? false) && is_array($response)) {
             return $this->transformHal($response);
         }
 
         return $response;
+    }
+
+    /**
+     * Translates a caught transport error into the generated exception matching the
+     * response body's "type" value. Falls back to the original transport exception
+     * unchanged when there is no match, so behaviour for anything not covered by
+     * $exceptionMapping is identical to before this translation existed.
+     *
+     * @param array<string, class-string<Throwable>> $exceptionMapping
+     */
+    private function translateErrorResponse(ErrorResponse $exception, array $exceptionMapping): Throwable
+    {
+        $type = $exception->decodedBody()['type'] ?? null;
+        $exceptionClass = is_string($type) ? ($exceptionMapping[$type] ?? null) : null;
+
+        if ($exceptionClass === null) {
+            return $exception->getPrevious() ?? $exception;
+        }
+
+        /** @phpstan-ignore-next-line */
+        return $exceptionClass::fromArray($exception->decodedBody());
     }
 
     /**

@@ -122,6 +122,22 @@ class GeneratorTest extends TestCase
             'class WidgetsClient extends AbstractClient implements WidgetsClientInterface',
             $client,
         );
+        self::assertStringContainsString(
+            "'/problem/widget-name-already-exists' => \\OpenAPI\\Client\\Model\\WidgetNameAlreadyExists::class,",
+            $client,
+            'createWidget() should pass its problem-details error responses to performRequest() as an exception map',
+        );
+
+        $exceptionModelFile = $this->projectRoot . '/Model/WidgetNameAlreadyExists.php';
+        self::assertFileExists($exceptionModelFile);
+        $widgetNameAlreadyExists = (string) file_get_contents($exceptionModelFile);
+        self::assertStringContainsString(
+            'class WidgetNameAlreadyExists extends \Exception implements SpecialKeySupport, JsonSchemaAwareRecord',
+            $widgetNameAlreadyExists,
+            'a response schema shaped like an RFC7807 problem details object should generate a throwable class',
+        );
+        self::assertStringContainsString('use ProblemDetailsExceptionLogic;', $widgetNameAlreadyExists);
+        self::assertStringNotContainsString('use JsonSchemaAwareRecordLogic;', $widgetNameAlreadyExists);
 
         $this->assertGeneratedPhpLints();
     }

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace TeamBlue\OpenApi\Codegen\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SplFileObject;
+use TeamBlue\OpenApi\Codegen\Client\Exception\ErrorResponse;
 use TeamBlue\OpenApi\Codegen\Client\NullClientWrapper;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilder;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Client\ClientBuilderWithoutConfigs;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Exception\TestProblem;
 
 use function file_get_contents;
 
@@ -121,5 +124,52 @@ class ClientTest extends TestCase
 
         $client = (new ClientBuilder($wrapper))->first();
         $client->testWithFileBody($file);
+    }
+
+    public function testTranslatesAMappedErrorResponseIntoTheGeneratedException(): void
+    {
+        $wrapper = $this->createMock(NullClientWrapper::class);
+        $wrapper
+            ->method('request')
+            ->willThrowException(new ErrorResponse(
+                409,
+                [
+                    'type' => '/problem/widget-exists',
+                    'title' => 'Widget exists',
+                    'detail' => 'Already there.',
+                    'status' => 409,
+                ],
+                new RuntimeException('original transport error'),
+            ));
+
+        $client = (new ClientBuilder($wrapper))->first();
+
+        $this->expectException(TestProblem::class);
+        $this->expectExceptionMessage('Already there.');
+
+        $client->testWithExceptionMapping(['/problem/widget-exists' => TestProblem::class]);
+    }
+
+    public function testRethrowsTheOriginalExceptionWhenTheTypeIsNotMapped(): void
+    {
+        $originalException = new RuntimeException('original transport error');
+
+        $wrapper = $this->createMock(NullClientWrapper::class);
+        $wrapper
+            ->method('request')
+            ->willThrowException(new ErrorResponse(
+                409,
+                ['type' => '/problem/something-else'],
+                $originalException,
+            ));
+
+        $client = (new ClientBuilder($wrapper))->first();
+
+        try {
+            $client->testWithExceptionMapping(['/problem/widget-exists' => TestProblem::class]);
+            self::fail('Expected the original exception.');
+        } catch (RuntimeException $caught) {
+            self::assertSame($originalException, $caught);
+        }
     }
 }

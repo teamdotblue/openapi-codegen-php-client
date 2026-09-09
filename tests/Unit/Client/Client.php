@@ -8,6 +8,7 @@ use SplFileObject;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithArrayBody;
 use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithFileBody;
+use Throwable;
 
 class Client extends \TeamBlue\OpenApi\Codegen\Client\Client
 {
@@ -44,6 +45,20 @@ class Client extends \TeamBlue\OpenApi\Codegen\Client\Client
                     'body' => $file,
                 ],
             ),
+        );
+    }
+
+    /** @param array<string, class-string<Throwable>> $exceptionMapping */
+    public function testWithExceptionMapping(array $exceptionMapping): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo'],
+                ],
+            ),
+            $exceptionMapping,
         );
     }
 }

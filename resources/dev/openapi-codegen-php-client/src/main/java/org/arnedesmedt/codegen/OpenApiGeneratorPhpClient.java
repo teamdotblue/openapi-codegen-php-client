@@ -68,6 +68,13 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
   private boolean clientsMode = false;
 
+  // Populated by collectExceptionMapping() during preprocessOpenAPI(), consumed by
+  // fromModel() (flags the schema so model.mustache renders it as a \Exception
+  // subclass) and postProcessOperationsWithModels() (attaches the per-operation
+  // type -> exception class lookup client.mustache passes to performRequest()).
+  private final Set<String> exceptionSchemaNames = new HashSet<>();
+  private final Map<String, LinkedHashMap<String, String>> exceptionMappingByOperationId = new HashMap<>();
+
   public OpenApiGeneratorPhpClient() {
     super();
 
@@ -395,6 +402,7 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
             if (operation.getResponses() != null) {
                 this.sortResponses(operation);
+                this.collectExceptionMapping(operation);
             }
         }
     }
@@ -454,6 +462,12 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
 
     if (model.vendorExtensions == null) {
       model.vendorExtensions = new HashMap<>();
+    }
+
+    if (this.exceptionSchemaNames.contains(name)) {
+      model.vendorExtensions.put("x-is-exception", true);
+
+      return model;
     }
 
     if (!isValueObjectModel(model)) {
@@ -622,6 +636,8 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
                 this.applyVoTypeToParameter(param, parameterSchemas);
             }
         }
+
+        this.applyExceptionMapping(op);
     }
 
     return objs;
@@ -646,6 +662,29 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     }
     param.vendorExtensions.put("x-has-vo-type", true);
     param.vendorExtensions.put("x-vo-type", voType.toString());
+  }
+
+  // Renders as the type -> exception-class array client.mustache passes as the
+  // second argument to performRequest(); see collectExceptionMapping() for how the
+  // per-operation mapping this reads from gets built.
+  private void applyExceptionMapping(CodegenOperation op) {
+    LinkedHashMap<String, String> mapping = this.exceptionMappingByOperationId.get(op.operationId);
+    if (mapping == null || mapping.isEmpty()) {
+      return;
+    }
+
+    List<Map<String, String>> mappingEntries = new ArrayList<>();
+    for (Map.Entry<String, String> entry : mapping.entrySet()) {
+      Map<String, String> mappingEntry = new HashMap<>();
+      mappingEntry.put("type", entry.getKey());
+      mappingEntry.put("exceptionClass", entry.getValue());
+      mappingEntries.add(mappingEntry);
+    }
+
+    if (op.vendorExtensions == null) {
+      op.vendorExtensions = new HashMap<>();
+    }
+    op.vendorExtensions.put("x-exception-mapping", mappingEntries);
   }
 
   private void createSchemaFromParameters(Operation operation, Components components, String inType) {
@@ -733,6 +772,78 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     for(String key : sortedMap.keySet()){
         responses.addApiResponse(key, sortedMap.get(key));
     }
+  }
+
+  // Recognizes RFC7807 "problem details" error responses (shaas-api and friends): a
+  // non-2xx response whose schema has a "type" property with a fixed string default,
+  // e.g. {"type": {"type": "string", "default": "/problem/shaas/widget-exists"}, ...}.
+  // Every such schema found gets flagged for fromModel() below, and the operation
+  // gets a type -> schema-name lookup for client.mustache to pass to performRequest().
+  private void collectExceptionMapping(Operation operation) {
+    LinkedHashMap<String, String> mapping = new LinkedHashMap<>();
+
+    for (Map.Entry<String, ApiResponse> entry : operation.getResponses().entrySet()) {
+      if (!isErrorStatusCode(entry.getKey())) {
+        continue;
+      }
+
+      String schemaName = this.problemSchemaNameFromResponse(entry.getValue());
+      if (schemaName == null) {
+        continue;
+      }
+
+      String typeValue = this.problemTypeValue(schemaName);
+      if (typeValue == null) {
+        continue;
+      }
+
+      mapping.put(typeValue, schemaName);
+      this.exceptionSchemaNames.add(schemaName);
+    }
+
+    if (!mapping.isEmpty()) {
+      this.exceptionMappingByOperationId.put(operation.getOperationId(), mapping);
+    }
+  }
+
+  private boolean isErrorStatusCode(String statusCode) {
+    try {
+      int code = Integer.parseInt(statusCode);
+
+      return code >= 400 && code < 600;
+    } catch (NumberFormatException exception) {
+      return false;
+    }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private String problemSchemaNameFromResponse(ApiResponse response) {
+    if (response.getContent() == null) {
+      return null;
+    }
+
+    MediaType mediaType = response.getContent().get("application/json");
+    if (mediaType == null || mediaType.getSchema() == null) {
+      return null;
+    }
+
+    return ModelUtils.getSimpleRef(mediaType.getSchema().get$ref());
+  }
+
+  @SuppressWarnings("rawtypes")
+  private String problemTypeValue(String schemaName) {
+    Map<String, Schema> schemas = this.openAPI.getComponents().getSchemas();
+    Schema schema = schemas == null ? null : schemas.get(schemaName);
+    if (schema == null || schema.getProperties() == null) {
+      return null;
+    }
+
+    Schema typeProperty = (Schema) schema.getProperties().get("type");
+    if (typeProperty == null || !(typeProperty.getDefault() instanceof String)) {
+      return null;
+    }
+
+    return (String) typeProperty.getDefault();
   }
 
   @Override
