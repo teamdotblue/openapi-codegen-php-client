@@ -139,6 +139,24 @@ class GeneratorTest extends TestCase
         self::assertStringContainsString('use ProblemDetailsExceptionLogic;', $widgetNameAlreadyExists);
         self::assertStringNotContainsString('use JsonSchemaAwareRecordLogic;', $widgetNameAlreadyExists);
 
+        // A schema literally named "Interface" collides with the PHP keyword: the
+        // generator must rename the class (to "ModelInterface") *and* every other
+        // template referencing that model (factory, "Default" trait import) must
+        // follow the same rename, or the generated PHP fails to even parse.
+        $modelInterfaceFile = $this->projectRoot . '/Model/ModelInterface.php';
+        self::assertFileExists($modelInterfaceFile);
+        $modelInterface = (string) file_get_contents($modelInterfaceFile);
+        self::assertStringContainsString('final class ModelInterface ', $modelInterface);
+        self::assertStringContainsString('use OpenAPI\Client\Default\ModelInterfaceDefault;', $modelInterface);
+
+        $factoryFile = $this->projectRoot . '/Factory/ModelInterfaceFactory.php';
+        self::assertFileExists($factoryFile);
+        $factory = (string) file_get_contents($factoryFile);
+        self::assertStringContainsString('use OpenAPI\Client\Model\ModelInterface;', $factory);
+        self::assertStringContainsString('return ModelInterface::class;', $factory);
+
+        self::assertFileExists($this->projectRoot . '/Default/ModelInterfaceDefault.php');
+
         $this->assertGeneratedPhpLints();
     }
 

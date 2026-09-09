@@ -56,7 +56,7 @@ final class {{classFilename}} extends {{vendorExtensions.x-vo-base-class-short}}
 }
 {{/vendorExtensions.x-is-value-object}}
 {{^vendorExtensions.x-is-value-object}}
-use {{invokerPackage}}\Default\{{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}}Default;
+use {{invokerPackage}}\Default\{{vendorExtensions.x-unsuffixed-classname}}Default;
 {{#discriminator}}
 use TeamBlue\JsonImmutableObjects\Polymorphism\Discriminator;
 use TeamBlue\JsonImmutableObjects\Polymorphism\DiscriminatorLogic;{{/discriminator}}{{^discriminator}}

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace {{modelPackage}}Factory;
 {{#model}}
 use TeamBlue\JsonImmutableObjects\FactoryFromArray;
-use {{modelPackage}}Model\{{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}};
+use {{modelPackage}}Model\{{vendorExtensions.x-unsuffixed-classname}};
 
 /**
- * @method static {{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}} fromArray(mixed[] $array)
- * @method static {{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}} fromRecordData(mixed[] $array)
+ * @method static {{vendorExtensions.x-unsuffixed-classname}} fromArray(mixed[] $array)
+ * @method static {{vendorExtensions.x-unsuffixed-classname}} fromRecordData(mixed[] $array)
  */
 class {{classname}}
 {
@@ -17,6 +17,6 @@ class {{classname}}
 
     protected static function modelClass(): string
     {
-        return {{#lambda.pascalcase}}{{name}}{{/lambda.pascalcase}}::class;
+        return {{vendorExtensions.x-unsuffixed-classname}}::class;
     }
 }{{/model}}{{/models}}

@@ -97,7 +97,15 @@
                     "status": {"type": "string", "enum": ["active", "inactive"]},
                     "ownerId": {"type": "string", "x-vo-type": "TeamBlue\\ValueObjects\\Implementation\\String\\UuidValue"},
                     "2fa": {"type": "boolean"},
-                    "@type": {"type": "string"}
+                    "@type": {"type": "string"},
+                    "networkInterface": {"$ref": "#/components/schemas/Interface"}
+                }
+            },
+            "Interface": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                    "name": {"type": "string"}
                 }
             },
             "WidgetInput": {

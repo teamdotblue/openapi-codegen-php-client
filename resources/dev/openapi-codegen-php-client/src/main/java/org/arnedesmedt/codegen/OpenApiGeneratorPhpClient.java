@@ -451,6 +451,31 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
       return super.toModelName(name);
   }
 
+  /**
+   * factory.mustache and model.mustache both need to reference *another* model's
+   * class name (the model a factory/default builds, or the model a default extends)
+   * from within their own generation pass, where modelNameSuffix is "Factory"/"Default"
+   * and would wrongly get appended to that other reference too if reusing toModelName().
+   * AbstractPhpCodegen.toModelName() caches by the raw schema name regardless of the
+   * currently active suffix, so temporarily clearing modelNameSuffix and recalling it
+   * would just return the already-cached, suffixed value from this same run. Replicating
+   * the reserved-word/leading-digit rename here (mirroring AbstractPhpCodegen's private
+   * toGenericName()) without ever touching modelNamePrefix/modelNameSuffix avoids that.
+   */
+  private String unsuffixedModelClassName(String name) {
+      String sanitized = name.replaceAll("\\]", "").replaceAll("[^\\w\\\\]+", "_").replace("$", "");
+
+      if (isReservedWord(sanitized)) {
+          sanitized = "model_" + sanitized;
+      }
+
+      if (sanitized.matches("^\\d.*")) {
+          sanitized = "model_" + sanitized;
+      }
+
+      return org.openapitools.codegen.utils.StringUtils.camelize(sanitized);
+  }
+
   // Non-object schemas (enum, pattern, numeric range, recognized string format, or
   // explicitly opted in via x-value-object) are rendered by model.mustache as a
   // team-blue/php-value-objects subclass instead of the usual JsonSchemaAwareRecord.
@@ -861,6 +886,12 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
         List<ModelMap> models = objs.getModels();
         ModelMap modelMap = models.get(0);
         CodegenModel model = modelMap.getModel();
+
+        if (model.vendorExtensions == null) {
+            model.vendorExtensions = new HashMap<>();
+        }
+
+        model.vendorExtensions.put("x-unsuffixed-classname", unsuffixedModelClassName(model.name));
 
         // Derive x-has-vo-type from the x-vo-type vendor extension.
         // DefaultCodegen copies all schema extensions into vendorExtensions, so we
