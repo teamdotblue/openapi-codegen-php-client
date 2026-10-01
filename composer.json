@@ -8,6 +8,7 @@
         "php"
     ],
     "type" : "library",
+    "license": "Apache-2.0",
     "require" : {
         "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
         "guzzlehttp/guzzle": "~7.0",
