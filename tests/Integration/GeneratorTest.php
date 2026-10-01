@@ -117,6 +117,8 @@ class GeneratorTest extends TestCase
             'digit-leading property names should be prefixed instead of camelised',
         );
 
+        self::assertStringContainsString("private string|null \$status = 'active';", $widget);
+
         $client = (string) file_get_contents($this->projectRoot . '/Client/WidgetsClient.php');
         self::assertStringContainsString(
             'class WidgetsClient extends AbstractClient implements WidgetsClientInterface',

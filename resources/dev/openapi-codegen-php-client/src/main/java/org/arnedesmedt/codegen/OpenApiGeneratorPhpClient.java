@@ -1000,6 +1000,62 @@ public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements Codeg
     return value;
   }
 
+  /**
+   * Map the generated, UPPER_SNAKE_CASE enum constant name back to the original
+   * OpenAPI value so property defaults keep the case used in the spec
+   * (e.g. "active" instead of "ACTIVE").
+   *
+   * DefaultCodegen builds the constant name and then passes it here; by looking
+   * the name up in the property's allowableValues we can recover the raw enum
+   * value and return it in the form model.mustache expects (a raw, single-quote
+   * escaped string for string enums; the plain value for numeric/boolean enums).
+   */
+  @Override
+  public String toEnumDefaultValue(CodegenProperty property, String value) {
+    if (property == null || value == null) {
+      return value;
+    }
+
+    CodegenProperty target = property.mostInnerItems != null ? property.mostInnerItems : property;
+    if (target.allowableValues == null) {
+      return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> enumVars = (List<Map<String, Object>>) target.allowableValues.get("enumVars");
+    @SuppressWarnings("unchecked")
+    List<Object> values = (List<Object>) target.allowableValues.get("values");
+    if (enumVars == null || values == null) {
+      return value;
+    }
+
+    int valueIndex = 0;
+    for (Map<String, Object> enumVar : enumVars) {
+      while (valueIndex < values.size() && values.get(valueIndex) == null) {
+        valueIndex++;
+      }
+
+      if (valueIndex >= values.size()) {
+        break;
+      }
+
+      if (value.equals(enumVar.get("name"))) {
+        Object original = values.get(valueIndex);
+        if (original != null) {
+          if (Boolean.TRUE.equals(target.isString) || isDataTypeString(target.dataType)) {
+            return original.toString().replace("'", "\\'");
+          }
+
+          return String.valueOf(original);
+        }
+      }
+
+      valueIndex++;
+    }
+
+    return value;
+  }
+
   // A bare passthrough here (returning `value` as-is) produces invalid PHP constant
   // names for any enum value containing characters that aren't valid in a PHP
   // identifier (spaces, hyphens, ...), e.g. "Private VLAN" -> `public const Private VLAN`.
