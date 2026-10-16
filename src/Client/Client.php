@@ -202,6 +202,15 @@ abstract class Client
             );
         }
 
+        if ($propertyName === 'query') {
+            // Spec names like `category[]` must keep their brackets: buildQueryString()
+            // repeats the full spec name per value (`category[]=A&category[]=B`), and
+            // PHP-based backends only collect repeated values into an array when the key
+            // itself carries brackets. Stripping was a Guzzle-era necessity (to avoid
+            // `category[][0]=A`), but the query string is built in-house now.
+            return $data;
+        }
+
         return ArrayUtil::removeSuffixFromKeys($data, '[]');
     }
 
