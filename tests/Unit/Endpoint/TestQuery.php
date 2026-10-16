@@ -17,11 +17,13 @@ class TestQuery implements JsonSchemaAwareRecord, SpecialKeySupport
     private string|null $testQuery = null;
     /** @var array<string>|null */
     private array|null $arrayQuery = null;
+    /** @var array<string>|null */
+    private array|null $explodeQuery = null;
 
     /** @return array<string, string> */
     private static function arrayPropItemTypeMap(): array
     {
-        return ['arrayQuery' => 'string'];
+        return ['arrayQuery' => 'string', 'explodeQuery' => 'string'];
     }
 
     /** @return array<string,string> */
@@ -30,6 +32,7 @@ class TestQuery implements JsonSchemaAwareRecord, SpecialKeySupport
         return [
             'testQuery' => 'testQuery',
             'arrayQuery[]' => 'arrayQuery',
+            'explodeQuery' => 'explodeQuery',
         ];
     }
 }
