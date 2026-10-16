@@ -81,9 +81,30 @@ class GuzzleClientWrapper implements ClientWrapper
 
     private function contentsFromResponse(ResponseInterface $response): string
     {
-        $response->getBody()->rewind();
+        $contents = $this->readBody($response);
+
+        // Never leave a consumed stream behind: callers may inspect the
+        // response body of a rethrown exception (e.g. retry logic reading
+        // getContents() to decide whether an error is retryable).
+        $this->rewindBody($response);
+
+        return $contents;
+    }
+
+    private function readBody(ResponseInterface $response): string
+    {
+        $this->rewindBody($response);
 
         return $response->getBody()->getContents();
+    }
+
+    private function rewindBody(ResponseInterface $response): void
+    {
+        if (! $response->getBody()->isSeekable()) {
+            return;
+        }
+
+        $response->getBody()->rewind();
     }
 
     private function setResponse(ResponseInterface $response): self
