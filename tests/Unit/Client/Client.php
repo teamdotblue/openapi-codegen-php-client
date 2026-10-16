@@ -24,13 +24,25 @@ class Client extends \TeamBlue\OpenApi\Codegen\Client\Client
         );
     }
 
-    public function testWithArrayQuery(): mixed
+    public function testWithBracketedArrayQuery(): mixed
     {
         return $this->performRequest(
             TestEndpoint::fromArray(
                 [
                     'idTest' => 1,
                     'query' => ['testQuery' => 'ziezo', 'arrayQuery' => ['a', 'b']],
+                ],
+            ),
+        );
+    }
+
+    public function testWithExplodeArrayQuery(): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo', 'explodeQuery' => ['a', 'b']],
                 ],
             ),
         );
