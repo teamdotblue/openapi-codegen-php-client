@@ -1,0 +1,38 @@
+grumphp:
+    fixer:
+        enabled: true
+        fix_by_default: true
+    ascii:
+        succeeded: ~
+        failed: ~
+    tasks:
+        phpcs: null
+        phpstan: null
+        phpmd:
+            ruleset:
+                - phpmd.xml
+        phpmd-tests:
+            metadata:
+                task: phpmd
+            ruleset:
+                - phpmd-tests.xml
+        git_commit_message:
+            enforce_capitalized_subject: false
+            type_scope_conventions:
+                types:
+                    - build
+                    - chore
+                    - ci
+                    - docs
+                    - feat
+                    - fix
+                    - perf
+                    - refactor
+                    - revert
+                    - style
+                    - test
+        git_branch_name:
+            whitelist:
+                - "/^(feature|hotfix|bugfix)\\/([A-Z]+-[0-9]+-)?.+$/"
+                - "/^(main)$/"
+

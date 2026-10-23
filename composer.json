@@ -1,0 +1,72 @@
+{
+    "name": "team-blue/java-openapi-codegen-php-client",
+    "description": "A library to create a PHP Client based on an OpenApi spec.",
+    "keywords": [
+        "openapi",
+        "generator",
+        "client",
+        "php"
+    ],
+    "type": "library",
+    "license": "Apache-2.0",
+    "require": {
+        "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
+        "guzzlehttp/guzzle": "~7.0",
+        "symfony/http-client-contracts": "~3.0",
+        "team-blue/php-client-mock": "^1.0 || ^2.0",
+        "team-blue/php-json-immutable-objects": "^1.0",
+        "team-blue/php-util": "^1.0"
+    },
+    "require-dev": {
+        "doctrine/coding-standard": "~11.0",
+        "icanhazstring/composer-unused": "~0.1",
+        "phpmd/phpmd": "~2.0",
+        "phpro/grumphp": "~2.0",
+        "phpstan/phpstan": "~1.0",
+        "phpunit/phpunit": "~9.0",
+        "rector/rector": "~0.1",
+        "squizlabs/php_codesniffer": "~3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TeamBlue\\OpenApi\\Codegen\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TeamBlue\\OpenApi\\Codegen\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "bin": [
+        "resources/dev/openapi-codegen-php-client.sh",
+        "resources/dev/fetch-openapi-and-generate.sh"
+    ],
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpro/grumphp": true
+        },
+        "sort-packages": true
+    },
+    "scripts-descriptions": {
+        "tests": "Run all tests",
+        "tests:integration": "Run the slow, Docker-based generator integration test"
+    },
+    "scripts": {
+        "tests": [
+            "vendor/bin/composer-unused",
+            "vendor/bin/phpcbf",
+            "vendor/bin/phpcs",
+            "vendor/bin/phpstan analyze --no-progress",
+            "vendor/bin/phpmd src text phpmd.xml",
+            "vendor/bin/phpmd tests text phpmd-tests.xml",
+            "vendor/bin/rector --dry-run --no-progress-bar",
+            "vendor/bin/phpunit"
+        ],
+        "tests:integration": [
+            "vendor/bin/phpunit --testsuite integration"
+        ]
+    }
+}

@@ -1,0 +1,1185 @@
+package org.teamblue.codegen;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.ComposedSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.QueryParameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.io.File;
+
+import org.apache.commons.lang3.StringUtils;
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.model.OperationsMap;
+import org.openapitools.codegen.utils.ModelUtils;
+import org.openapitools.codegen.languages.PhpClientCodegen;
+import org.openapitools.codegen.templating.mustache.EscapeChar;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.collect.ImmutableMap;
+import com.samskivert.mustache.Mustache;
+
+public class OpenApiGeneratorPhpClient extends PhpClientCodegen implements CodegenConfig {
+  public static final String GENERATOR_NAME         = "openapi-codegen-php-client";
+  public static final String HELP_URL               = "helpUrl";
+  public static final String COPYRIGHT              = "copyright";
+  public static final String CLIENT_CLASS           = "clientClass";
+  public static final String CLIENT_CLASS_QUALIFIER = "clientClassQualifier";
+  public static final String CLIENTS_MODE           = "clients";
+  public static final String INTERNAL               = "internal";
+
+  // OpenAPI string `format` values that map onto a ready-made, zero-config
+  // team-blue/php-value-objects base class (no generated method overrides needed).
+  private static final Map<String, String> STRING_FORMAT_VALUE_OBJECTS = new HashMap<>();
+
+  static {
+    STRING_FORMAT_VALUE_OBJECTS.put("uuid", "TeamBlue\\ValueObjects\\Implementation\\String\\UuidValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("email", "TeamBlue\\ValueObjects\\Implementation\\String\\EmailValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("hostname", "TeamBlue\\ValueObjects\\Implementation\\String\\HostnameValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("uri", "TeamBlue\\ValueObjects\\Implementation\\String\\UriValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("url", "TeamBlue\\ValueObjects\\Implementation\\String\\UrlValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("ipv4", "TeamBlue\\ValueObjects\\Implementation\\String\\IpV4Value");
+    STRING_FORMAT_VALUE_OBJECTS.put("ipv6", "TeamBlue\\ValueObjects\\Implementation\\String\\IpV6Value");
+    STRING_FORMAT_VALUE_OBJECTS.put("byte", "TeamBlue\\ValueObjects\\Implementation\\String\\Base64EncodedStringValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("date-time", "TeamBlue\\ValueObjects\\Implementation\\String\\DateTimeValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("date", "TeamBlue\\ValueObjects\\Implementation\\String\\DateTimeValue");
+    STRING_FORMAT_VALUE_OBJECTS.put("password", "TeamBlue\\ValueObjects\\Implementation\\String\\SensitiveValue");
+  }
+
+  private boolean clientsMode = false;
+
+  // Populated by collectExceptionMapping() during preprocessOpenAPI(), consumed by
+  // fromModel() (flags the schema so model.mustache renders it as a \Exception
+  // subclass) and postProcessOperationsWithModels() (attaches the per-operation
+  // type -> exception class lookup client.mustache passes to performRequest()).
+  private final Set<String> exceptionSchemaNames = new HashSet<>();
+  private final Map<String, LinkedHashMap<String, String>> exceptionMappingByOperationId = new HashMap<>();
+
+  public OpenApiGeneratorPhpClient() {
+    super();
+
+    cliOptions.add(new CliOption(HELP_URL, "Help URL"));
+    cliOptions.add(new CliOption(COPYRIGHT, "Copyright"));
+    cliOptions.add(new CliOption(CLIENT_CLASS, "Client file"));
+    cliOptions.add(CliOption.newBoolean(INTERNAL, "Whether the generated package is for internal team.blue use (Combell coding standard, private Packeton registry) rather than public/external use (Doctrine coding standard, no private registry)", true));
+
+    typeMapping.put("date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("Date", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("DateTime", "\\TeamBlue\\\\ValueObjects\\\\Implementation\\\\String\\\\DateTimeValue");
+    typeMapping.put("set", "array");
+    typeMapping.put("object", "array");
+
+    this.setTemplateDir(OpenApiGeneratorPhpClient.GENERATOR_NAME);
+    this.embeddedTemplateDir = this.templateDir();
+
+    this.apiDirName = "Endpoint";
+    setApiPackage(getInvokerPackage() + "\\" + apiDirName);
+  }
+
+  @Override
+  public void processOpts() {
+    super.processOpts();
+
+    this.clientsMode = additionalProperties.containsKey(CLIENTS_MODE);
+
+    String clientClass = (String) additionalProperties.getOrDefault(CLIENT_CLASS, "Client");
+    additionalProperties.put(CLIENT_CLASS, clientClass);
+
+    if (clientClass.startsWith("Abstract")) {
+      additionalProperties.put(CLIENT_CLASS_QUALIFIER, "abstract");
+    }
+
+    // Written back as a real Boolean (not a String) so {{#internal}}/{{^internal}}
+    // mustache sections evaluate correctly regardless of whether config.json passed
+    // a JSON boolean or a string.
+    boolean internal = !additionalProperties.containsKey(INTERNAL)
+        || Boolean.parseBoolean(additionalProperties.get(INTERNAL).toString());
+    additionalProperties.put(INTERNAL, internal);
+
+    this.resetTemplateFiles();
+
+    // PhpClientCodegen defaults to a "lib" source folder, but the generated
+    // rector.php/phpcs.xml/composer.json all assume Model and Endpoint live
+    // at the project root.
+    this.setSrcBasePath("");
+
+    if (this.clientsMode) {
+        // Generated once per spec: one accessor + one createXxxClient()/createXxxMock()
+        // hook pair per tag, dispatching to whatever client.mustache/mock.mustache
+        // produced for that tag (see apiFilename()/addOperationToGroup() below).
+        supportingFiles.add(new SupportingFile("clientBuilder.mustache", "Client", "AbstractClientBuilder.php"));
+        // rector.php targets the whole Client/ directory, but is only written
+        // during this pass since that's when clientsMode's supportingFiles run.
+        supportingFiles.add(new SupportingFile("rector.mustache", "", "rector.php"));
+    } else {
+        supportingFiles.add(new SupportingFile("readme.mustache", "", "README.md"));
+        supportingFiles.add(new SupportingFile("phpstan.mustache", "", "phpstan.neon"));
+        supportingFiles.add(new SupportingFile("phpcs.mustache", "", "phpcs.xml"));
+        supportingFiles.add(new SupportingFile("composer.mustache", "", "composer.json"));
+        supportingFiles.add(new SupportingFile("phpmd.mustache", "", "phpmd.xml"));
+        supportingFiles.add(new SupportingFile("grumphp.mustache", "", "grumphp.yml"));
+        supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
+    }
+
+    if (additionalProperties.containsKey("factories")) {
+        this.setSrcBasePath("Factory");
+        modelTemplateFiles = new HashMap<>();
+        modelTemplateFiles.put("factory.mustache", ".php");
+        this.modelPackage = this.invokerPackage + "\\";
+        this.modelNameSuffix = "Factory";
+        this.fileSuffix = "Factory";
+    }
+
+    if (additionalProperties.containsKey("defaults")) {
+        this.setSrcBasePath("Default");
+        modelTemplateFiles = new HashMap<>();
+        modelTemplateFiles.put("default.mustache", ".php");
+        this.modelPackage = this.invokerPackage + "\\";
+        this.modelNameSuffix = "Default";
+        this.fileSuffix = "Default";
+    }
+
+    this.onlyJsonMediaTypes();
+    this.onlyJsonComponents();
+  }
+
+  private void onlyJsonMediaTypes() {
+    for (String pathName : openAPI.getPaths().keySet()) {
+      PathItem pathItem = openAPI.getPaths().get(pathName);
+      Map<HttpMethod, Operation> operations = pathItem.readOperationsMap();
+      for (HttpMethod method : operations.keySet()) {
+        Operation operation = operations.get(method);
+        if (operation.getRequestBody() != null) {
+          RequestBody requestBody = operation.getRequestBody();
+          Content content = requestBody.getContent();
+          if (content != null) {
+            // remove all the media types except application/json
+            MediaType mediaType = content.get("application/json");
+              MediaType mediaTypePatch = content.get("application/merge-patch+json");
+              if (mediaType != null || mediaTypePatch != null) {
+                content.clear();
+              }
+
+                if (mediaType != null) {
+                    content.addMediaType("application/json", mediaType);
+                }
+
+                if (mediaTypePatch != null) {
+                    content.addMediaType("application/merge-patch+json", mediaTypePatch);
+                }
+          }
+        }
+
+        if (operation.getResponses() != null) {
+          operation.getResponses().forEach((responseCode, response) -> {
+            Content content = response.getContent();
+            if (content != null) {
+              // remove all the media types except application/json
+              MediaType mediaType = content.get("application/json");
+              MediaType mediaTypePatch = content.get("application/merge-patch+json");
+              if (mediaType != null || mediaTypePatch != null) {
+                content.clear();
+              }
+
+                if (mediaType != null) {
+                    content.addMediaType("application/json", mediaType);
+                }
+
+                if (mediaTypePatch != null) {
+                    content.addMediaType("application/merge-patch+json", mediaTypePatch);
+                }
+            }
+          });
+         }
+      }
+    }
+  }
+
+  private void onlyJsonComponents() {
+    Components components = openAPI.getComponents();
+    Map<String, Schema> schemas = components.getSchemas();
+    schemas.keySet().removeIf(schemaName -> schemaName.contains(".jsonld") || schemaName.contains(".jsonhal"));
+  }
+
+  @Override
+  public CodegenType getTag() {
+    return CodegenType.CLIENT;
+  }
+
+  @Override
+  public String getName() {
+    return OpenApiGeneratorPhpClient.GENERATOR_NAME;
+  }
+
+  @Override
+  public String toApiName(String name) {
+    return org.openapitools.codegen.utils.StringUtils.camelize(name);
+  }
+
+  // The built-in "lambda.camelcase" (CamelCaseAndSanitizeLambda) additionally
+  // escapes PHP reserved words (e.g. "default" -> "_default"), which is meant
+  // for contexts where a bare identifier can't be a keyword. PHP has allowed
+  // keywords as method names since PHP 7, so clientBuilder.mustache's tag
+  // accessor methods use this lambda instead to just lowercase the first
+  // character without that reserved-word escaping.
+  @Override
+  public ImmutableMap.Builder<String, Mustache.Lambda> addMustacheLambdas() {
+    return super.addMustacheLambdas()
+        .put("lowercaseFirst", (fragment, writer) -> {
+          String text = fragment.execute();
+          if (!text.isEmpty()) {
+            text = Character.toLowerCase(text.charAt(0)) + text.substring(1);
+          }
+          writer.write(text);
+        })
+        // schema.getMaximum()/getMinimum() are BigDecimal; for a round number with
+        // trailing zeros (e.g. 102400), BigDecimal#toString() can switch to scientific
+        // notation (e.g. "1.024E+5") once the value's canonical unscaled/scale
+        // representation ends up with a negative scale. That's invalid where the
+        // template emits it as a bare PHP numeric literal, so route these through
+        // BigDecimal#toPlainString(), which never uses scientific notation, instead of
+        // relying on whatever default toString() the upstream codegen already put there.
+        .put("plainnumber", (fragment, writer) -> {
+          String text = fragment.execute();
+          try {
+            writer.write(new BigDecimal(text).toPlainString());
+          } catch (NumberFormatException e) {
+            writer.write(text);
+          }
+        });
+  }
+
+  @Override
+  public String toAnyOfName(List<String> names, Schema composedSchema) {
+    return this.toComposedName(names, composedSchema);
+  }
+
+  @Override
+  public String toOneOfName(List<String> names, Schema composedSchema) {
+    return this.toComposedName(names, composedSchema);
+  }
+
+  @Override
+  public String toAllOfName(List<String> names, Schema composedSchema) {
+    return this.toComposedName(names, composedSchema);
+  }
+
+  private String toComposedName(List<String> names, Schema composedSchema) {
+    if (ModelUtils.isStringSchema(composedSchema)) {
+      return "string";
+    }
+
+    if (names.size() == 1) {
+      String name = names.get(0);
+      return this.toModelName(name);
+    }
+
+    return "mixed";
+  }
+
+  @Override
+  public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation co, Map<String, List<CodegenOperation>> operations) {
+      String uniqueName = co.operationId;
+      co.operationIdLowerCase = uniqueName.toLowerCase(Locale.ROOT);
+      co.operationIdCamelCase = org.openapitools.codegen.utils.StringUtils.camelize(uniqueName);
+      co.operationIdSnakeCase = org.openapitools.codegen.utils.StringUtils.underscore(uniqueName);
+
+      if (co.vendorExtensions == null) {
+        co.vendorExtensions = new HashMap<>();
+      }
+
+      co.vendorExtensions.put("x-operation-scope", co.vendorExtensions.getOrDefault("x-operation-scope", "public"));
+      co.vendorExtensions.put("x-add-to-documentation", co.vendorExtensions.getOrDefault("x-operation-scope", "public").equals("public"));
+
+      if (this.clientsMode) {
+          // Real tag-based grouping (framework already fans a multi-tag operation out
+          // to one call per tag), so each generated {Tag}Client only sees its own ops.
+          operations.computeIfAbsent(tag, key -> new ArrayList<>()).add(co);
+          return;
+      }
+
+      // Endpoint generation must stay one file per operation (see api.mustache), so
+      // this pass keeps grouping by operationId regardless of the operation's tags.
+      operations.put(uniqueName, Arrays.asList(co));
+  }
+
+  @Override
+  public String apiFilename(String templateName, String tag) {
+      if (!this.clientsMode) {
+          return super.apiFilename(templateName, tag);
+      }
+
+      String clientClass = (String) additionalProperties.getOrDefault(CLIENT_CLASS, "Client");
+      String pascalTag = toApiName(tag);
+      String filename;
+
+      switch (templateName) {
+          case "client.mustache":
+              filename = pascalTag.concat(clientClass).concat(".php");
+              break;
+          case "clientInterface.mustache":
+              filename = pascalTag.concat(clientClass).concat("Interface.php");
+              break;
+          case "mock.mustache":
+              filename = "Api".concat(pascalTag).concat(clientClass).concat("Mock.php");
+              break;
+          default:
+              return super.apiFilename(templateName, tag);
+      }
+
+      return this.outputFolder() + File.separator + "Client" + File.separator + filename;
+  }
+
+  @Override
+  @SuppressWarnings("rawtypes")
+  public String getTypeDeclaration(Schema p) {
+    if (ModelUtils.isArraySchema(p)
+        || ModelUtils.isMapSchema(p)
+        || ModelUtils.isObjectSchema(p)
+        || ModelUtils.isModel(p)
+        || StringUtils.isNotBlank(p.get$ref())
+    ) {
+      return "array";
+    }
+
+    return super.getTypeDeclaration(p);
+  }
+
+  @Override
+  public String getTypeDeclaration(String name) {
+    if (!languageSpecificPrimitives.contains(name)) {
+      return "array";
+    }
+
+    return super.getTypeDeclaration(name);
+  }
+
+  @Override
+  public void preprocessOpenAPI(OpenAPI openAPI) {
+    super.preprocessOpenAPI(openAPI);
+
+    Paths paths = openAPI.getPaths();
+    Components components = openAPI.getComponents();
+    Map<String, Schema> schemas = components.getSchemas();
+
+    for (String pathName : paths.keySet()) {
+        PathItem pathItem = paths.get(pathName);
+        Map<HttpMethod, Operation>  operations = pathItem.readOperationsMap();
+        for(HttpMethod method: operations.keySet()) {
+            Operation operation = operations.get(method);
+
+            if (operation.getOperationId() == null) {
+                operation.setOperationId(getOrGenerateOperationId(operation, pathName, method.toString().toLowerCase()));
+            }
+
+            if (operation.getParameters() != null) {
+                this.createSchemaFromParameters(operation, components, "query");
+            }
+
+            if (operation.getRequestBody() != null) {
+                this.createSchemaFromRequestBody(operation, components);
+            }
+
+            if (operation.getResponses() != null) {
+                this.sortResponses(operation);
+                this.collectExceptionMapping(operation);
+            }
+        }
+    }
+  }
+
+  @Override
+  public List<CodegenParameter> fromRequestBodyToFormParameters(RequestBody body, Set<String> imports) {
+        List<CodegenParameter> parameters = new ArrayList<CodegenParameter>();
+
+        CodegenParameter parameter = CodegenModelFactory.newInstance(CodegenModelType.PARAMETER);
+        parameter.baseType = body.getDescription();
+
+        if (body.getRequired() != null) {
+            parameter.required = body.getRequired();
+        }
+
+        parameters.add(parameter);
+
+        return parameters;
+  }
+
+  @Override
+  public String toApiImport(String name) {
+      return apiPackage() + "\\" + name;
+  }
+
+  @Override
+  public String toModelImport(String name) {
+      if ("".equals(modelPackage())) {
+          return name;
+      } else {
+          return modelPackage() + "\\" + name;
+      }
+  }
+
+  @Override
+  public String toModelName(final String name) {
+      if (name.equals("mixed")) {
+        return name;
+      }
+
+      if (name.equals("Object")) {
+        return "\\stdClass";
+      }
+
+      return super.toModelName(name);
+  }
+
+  /**
+   * factory.mustache and model.mustache both need to reference *another* model's
+   * class name (the model a factory/default builds, or the model a default extends)
+   * from within their own generation pass, where modelNameSuffix is "Factory"/"Default"
+   * and would wrongly get appended to that other reference too if reusing toModelName().
+   * AbstractPhpCodegen.toModelName() caches by the raw schema name regardless of the
+   * currently active suffix, so temporarily clearing modelNameSuffix and recalling it
+   * would just return the already-cached, suffixed value from this same run. Replicating
+   * the reserved-word/leading-digit rename here (mirroring AbstractPhpCodegen's private
+   * toGenericName()) without ever touching modelNamePrefix/modelNameSuffix avoids that.
+   */
+  private String unsuffixedModelClassName(String name) {
+      String sanitized = name.replaceAll("\\]", "").replaceAll("[^\\w\\\\]+", "_").replace("$", "");
+
+      if (isReservedWord(sanitized)) {
+          sanitized = "model_" + sanitized;
+      }
+
+      if (sanitized.matches("^\\d.*")) {
+          sanitized = "model_" + sanitized;
+      }
+
+      return org.openapitools.codegen.utils.StringUtils.camelize(sanitized);
+  }
+
+  // Non-object schemas (enum, pattern, numeric range, recognized string format, or
+  // explicitly opted in via x-value-object) are rendered by model.mustache as a
+  // team-blue/php-value-objects subclass instead of the usual JsonSchemaAwareRecord.
+  // DefaultCodegen would otherwise silently skip generating a file for most of these
+  // (isAlias=true), so eligible models are un-aliased here to force file generation.
+  @Override
+  public CodegenModel fromModel(String name, Schema schema) {
+    CodegenModel model = super.fromModel(name, schema);
+
+    if (model.vendorExtensions == null) {
+      model.vendorExtensions = new HashMap<>();
+    }
+
+    if (this.exceptionSchemaNames.contains(name)) {
+      model.vendorExtensions.put("x-is-exception", true);
+
+      return model;
+    }
+
+    if (!isValueObjectModel(model)) {
+      return model;
+    }
+
+    model.isAlias = false;
+    model.vendorExtensions.put("x-is-value-object", true);
+
+    String baseClass = resolveValueObjectBaseClass(model);
+    model.vendorExtensions.put("x-vo-base-class", baseClass);
+    model.vendorExtensions.put("x-vo-base-class-short", baseClass.substring(baseClass.lastIndexOf('\\') + 1));
+
+    if (!model.isEnum) {
+      applyValueObjectOverrides(model, baseClass);
+    }
+
+    return model;
+  }
+
+  // NOTE: pattern/minimum/maximum/exclusiveMinimum/exclusiveMaximum/format come from
+  // the IJsonSchemaValidationProperties interface CodegenModel implements and are
+  // only exposed via getters (no matching public fields) - confirmed against the
+  // openapi-generator-7.21.0 javadoc. isString/isInteger/isNumber/isBoolean/isEnum
+  // remain plain public fields as elsewhere in this class.
+  private boolean isValueObjectModel(CodegenModel model) {
+    if (model.isEnum) {
+      return true;
+    }
+
+    // Recognized formats (uuid, email, ...) get their own upstream code path that
+    // skips updateModelForString(), so isString is NOT set for them - checked
+    // independently of the isString/isInteger/... gate below instead of relying on it.
+    if (model.getFormat() != null && STRING_FORMAT_VALUE_OBJECTS.containsKey(model.getFormat())) {
+      return true;
+    }
+
+    boolean hasConstraint = model.getPattern() != null || model.getMinimum() != null || model.getMaximum() != null;
+    boolean explicitlyRequested = Boolean.TRUE.equals(model.vendorExtensions.get("x-value-object"));
+
+    return (hasConstraint || explicitlyRequested)
+        && (model.isString || model.isInteger || model.isNumber || model.isBoolean);
+  }
+
+  private String resolveValueObjectBaseClass(CodegenModel model) {
+    if (model.isEnum) {
+      return model.isString
+          ? "TeamBlue\\ValueObjects\\Implementation\\Enum\\StringEnumValue"
+          : "TeamBlue\\ValueObjects\\Implementation\\Enum\\IntEnumValue";
+    }
+
+    if (model.getFormat() != null && STRING_FORMAT_VALUE_OBJECTS.containsKey(model.getFormat())) {
+      return STRING_FORMAT_VALUE_OBJECTS.get(model.getFormat());
+    }
+
+    if (model.getPattern() != null) {
+      return "TeamBlue\\ValueObjects\\Implementation\\String\\PatternValue";
+    }
+
+    if (model.getMinimum() != null || model.getMaximum() != null) {
+      return model.isInteger
+          ? "TeamBlue\\ValueObjects\\Implementation\\Int\\RangeValue"
+          : "TeamBlue\\ValueObjects\\Implementation\\Float\\FloatRangeValue";
+    }
+
+    if (model.isString) {
+      return "TeamBlue\\ValueObjects\\Implementation\\String\\StringValue";
+    }
+
+    if (model.isInteger) {
+      return "TeamBlue\\ValueObjects\\Implementation\\Int\\IntValue";
+    }
+
+    if (model.isBoolean) {
+      return "TeamBlue\\ValueObjects\\Implementation\\Bool\\BoolValue";
+    }
+
+    return "TeamBlue\\ValueObjects\\Implementation\\Float\\FloatValue";
+  }
+
+  private void applyValueObjectOverrides(CodegenModel model, String baseClass) {
+    boolean isPatternClass = baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\String\\PatternValue");
+    if (isPatternClass && model.getPattern() != null) {
+      model.vendorExtensions.put("x-vo-needs-pattern-override", true);
+      model.vendorExtensions.put("x-vo-pattern", model.getPattern().replace("\\", "\\\\").replace("'", "\\'"));
+    }
+
+    boolean isRangeClass = baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\Int\\RangeValue")
+        || baseClass.equals("TeamBlue\\ValueObjects\\Implementation\\Float\\FloatRangeValue");
+    if (isRangeClass) {
+      model.vendorExtensions.put("x-vo-needs-range-override", true);
+      model.vendorExtensions.put("x-vo-minimum", model.getMinimum());
+      model.vendorExtensions.put("x-vo-maximum", model.getMaximum());
+      model.vendorExtensions.put("x-vo-included", !(model.getExclusiveMinimum() || model.getExclusiveMaximum()));
+    }
+  }
+
+  // DefaultCodegen's internal callers (fromModel(), etc.) all invoke the
+  // 3-arg overload directly, which never reaches the 2-arg one - overriding
+  // fromProperty(String, Schema) alone is silently never called.
+  @Override
+  public CodegenProperty fromProperty(String name, Schema p, boolean required) {
+      CodegenProperty property = super.fromProperty(name, p, required);
+
+      if (property.openApiType.equals("mixed")) {
+        property.complexType = "mixed";
+
+        if (property.vendorExtensions == null) {
+            property.vendorExtensions = new HashMap<>();
+        }
+        // `mixed` already includes null, so model.mustache must not append "|null"
+        // to it (PHP: "Type mixed can only be used as a standalone type").
+        property.vendorExtensions.put("x-is-mixed-type", true);
+      }
+
+      if (p != null && p.getExtensions() != null) {
+          Object voType = p.getExtensions().get("x-vo-type");
+          if (voType != null) {
+              if (property.vendorExtensions == null) {
+                  property.vendorExtensions = new HashMap<>();
+              }
+              property.vendorExtensions.put("x-has-vo-type", true);
+          }
+      }
+
+      return property;
+  }
+
+  @Override
+  public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
+    objs = super.postProcessOperationsWithModels(objs, allModels);
+
+    // Build a lookup of operationId -> parameter name -> schema so we can read
+    // the x-vo-type extension from the original parameter schemas.
+    Map<String, Map<String, Schema>> parameterSchemasByOperationId = new HashMap<>();
+    for (PathItem pathItem : openAPI.getPaths().values()) {
+        for (Operation operation : pathItem.readOperationsMap().values()) {
+            if (operation.getOperationId() == null || operation.getParameters() == null) {
+                continue;
+            }
+            Map<String, Schema> parameterSchemas = new HashMap<>();
+            for (Parameter parameter : operation.getParameters()) {
+                if (parameter.getName() != null && parameter.getSchema() != null) {
+                    parameterSchemas.put(parameter.getName(), parameter.getSchema());
+                }
+            }
+            parameterSchemasByOperationId.put(operation.getOperationId(), parameterSchemas);
+        }
+    }
+
+    for (CodegenOperation op : objs.getOperations().getOperation()) {
+        Map<String, Schema> parameterSchemas = parameterSchemasByOperationId.getOrDefault(op.operationId, Collections.emptyMap());
+        List<List<CodegenParameter>> paramLists = Arrays.asList(
+            op.allParams,
+            op.pathParams,
+            op.queryParams,
+            op.headerParams,
+            op.formParams,
+            op.cookieParams
+        );
+        for (List<CodegenParameter> paramList : paramLists) {
+            if (paramList == null) {
+                continue;
+            }
+            for (CodegenParameter param : paramList) {
+                this.applyVoTypeToParameter(param, parameterSchemas);
+            }
+        }
+
+        this.applyExceptionMapping(op);
+    }
+
+    return objs;
+  }
+
+  private void applyVoTypeToParameter(CodegenParameter param, Map<String, Schema> parameterSchemas) {
+    Object voType = param.vendorExtensions != null ? param.vendorExtensions.get("x-vo-type") : null;
+
+    if (voType == null) {
+        Schema parameterSchema = parameterSchemas.get(param.baseName);
+        if (parameterSchema != null && parameterSchema.getExtensions() != null) {
+            voType = parameterSchema.getExtensions().get("x-vo-type");
+        }
+    }
+
+    if (voType == null) {
+        return;
+    }
+
+    if (param.vendorExtensions == null) {
+        param.vendorExtensions = new HashMap<>();
+    }
+    param.vendorExtensions.put("x-has-vo-type", true);
+    param.vendorExtensions.put("x-vo-type", voType.toString());
+  }
+
+  // Renders as the type -> exception-class array client.mustache passes as the
+  // second argument to performRequest(); see collectExceptionMapping() for how the
+  // per-operation mapping this reads from gets built.
+  private void applyExceptionMapping(CodegenOperation op) {
+    LinkedHashMap<String, String> mapping = this.exceptionMappingByOperationId.get(op.operationId);
+    if (mapping == null || mapping.isEmpty()) {
+      return;
+    }
+
+    List<Map<String, String>> mappingEntries = new ArrayList<>();
+    for (Map.Entry<String, String> entry : mapping.entrySet()) {
+      Map<String, String> mappingEntry = new HashMap<>();
+      mappingEntry.put("type", entry.getKey());
+      mappingEntry.put("exceptionClass", entry.getValue());
+      mappingEntries.add(mappingEntry);
+    }
+
+    if (op.vendorExtensions == null) {
+      op.vendorExtensions = new HashMap<>();
+    }
+    op.vendorExtensions.put("x-exception-mapping", mappingEntries);
+  }
+
+  private void createSchemaFromParameters(Operation operation, Components components, String inType) {
+    List<Parameter> typeParameters = operation.getParameters()
+        .stream()
+        .filter(parameter -> (inType == "query" && parameter instanceof QueryParameter)
+            || parameter.getIn() == inType
+        )
+        .collect(Collectors.toList());
+
+        if (! typeParameters.isEmpty()) {
+            String typeName = operation.getOperationId() + org.openapitools.codegen.utils.StringUtils.camelize(inType);
+
+            Map<String, Schema> typeSchemas = typeParameters
+                .stream()
+                .collect(Collectors.toMap(Parameter::getName, Parameter::getSchema));
+
+            List<String> requiredParameters = typeParameters
+                .stream()
+                .filter(parameter -> !(parameter.getRequired() == null || parameter.getRequired() == false))
+                .map(parameter -> parameter.getName())
+                .collect(Collectors.toList());
+
+            ObjectSchema typeSchema = new ObjectSchema();
+            typeSchema.setProperties(typeSchemas);
+            typeSchema.setRequired(requiredParameters);
+
+            components.addSchemas(typeName, typeSchema);
+        }
+  }
+
+  private void createSchemaFromRequestBody(Operation operation, Components components) {
+    if (operation.getRequestBody() == null) {
+        return;
+    }
+
+    if (operation.getRequestBody().get$ref() != null) {
+        this.createSchemaFromRefRequestBody(operation, components);
+
+        return;
+    }
+
+    this.createSchemaFromFormData(operation, components);
+  }
+
+  private void createSchemaFromRefRequestBody(Operation operation, Components components) {
+    Map<String, Schema> schemas = components.getSchemas();
+    Map<String, RequestBody> requestBodies = components.getRequestBodies();
+    RequestBody requestBody = operation.getRequestBody();
+
+    String shortRef = ModelUtils.getSimpleRef(requestBody.get$ref());
+    String newShortRef = operation.getOperationId() + "Body";
+
+    // change the name in schemas
+    Schema schema = schemas.get(shortRef);
+    schemas.remove(shortRef);
+    components.addSchemas(newShortRef, schema);
+
+    // change the name in the requestBodies
+    RequestBody componentRequestBody = requestBodies.get(shortRef);
+    requestBodies.remove(shortRef);
+    components.addRequestBodies(newShortRef, componentRequestBody);
+
+    ModelUtils.getSchemaFromRequestBody(componentRequestBody).set$ref(newShortRef);
+    requestBody.set$ref(newShortRef);
+  }
+
+  private void createSchemaFromFormData(Operation operation, Components components) {
+    RequestBody requestBody = operation.getRequestBody();
+    Schema schema = ModelUtils.getSchemaFromRequestBody(requestBody);
+    String ref = operation.getOperationId() + "Body";
+
+    // add new schema
+    components.addSchemas(ref, schema);
+    components.addRequestBodies(ref, requestBody);
+    requestBody.set$ref(ref);
+    requestBody.setDescription(org.openapitools.codegen.utils.StringUtils.camelize(ref));
+  }
+
+  private void sortResponses(Operation operation) {
+    ApiResponses responses = operation.getResponses();
+    Map<String, ApiResponse> sortedMap = new TreeMap<String, ApiResponse>(responses);
+
+    responses.clear();
+    for(String key : sortedMap.keySet()){
+        responses.addApiResponse(key, sortedMap.get(key));
+    }
+  }
+
+  // Recognizes RFC7807 "problem details" error responses (shaas-api and friends): a
+  // non-2xx response whose schema has a "type" property with a fixed string default,
+  // e.g. {"type": {"type": "string", "default": "/problem/shaas/widget-exists"}, ...}.
+  // Every such schema found gets flagged for fromModel() below, and the operation
+  // gets a type -> schema-name lookup for client.mustache to pass to performRequest().
+  private void collectExceptionMapping(Operation operation) {
+    LinkedHashMap<String, String> mapping = new LinkedHashMap<>();
+
+    for (Map.Entry<String, ApiResponse> entry : operation.getResponses().entrySet()) {
+      if (!isErrorStatusCode(entry.getKey())) {
+        continue;
+      }
+
+      String schemaName = this.problemSchemaNameFromResponse(entry.getValue());
+      if (schemaName == null) {
+        continue;
+      }
+
+      String typeValue = this.problemTypeValue(schemaName);
+      if (typeValue == null) {
+        continue;
+      }
+
+      mapping.put(typeValue, schemaName);
+      this.exceptionSchemaNames.add(schemaName);
+    }
+
+    if (!mapping.isEmpty()) {
+      this.exceptionMappingByOperationId.put(operation.getOperationId(), mapping);
+    }
+  }
+
+  private boolean isErrorStatusCode(String statusCode) {
+    try {
+      int code = Integer.parseInt(statusCode);
+
+      return code >= 400 && code < 600;
+    } catch (NumberFormatException exception) {
+      return false;
+    }
+  }
+
+  @SuppressWarnings("rawtypes")
+  private String problemSchemaNameFromResponse(ApiResponse response) {
+    if (response.getContent() == null) {
+      return null;
+    }
+
+    MediaType mediaType = response.getContent().get("application/json");
+    if (mediaType == null || mediaType.getSchema() == null) {
+      return null;
+    }
+
+    return ModelUtils.getSimpleRef(mediaType.getSchema().get$ref());
+  }
+
+  @SuppressWarnings("rawtypes")
+  private String problemTypeValue(String schemaName) {
+    Map<String, Schema> schemas = this.openAPI.getComponents().getSchemas();
+    Schema schema = schemas == null ? null : schemas.get(schemaName);
+    if (schema == null || schema.getProperties() == null) {
+      return null;
+    }
+
+    Schema typeProperty = (Schema) schema.getProperties().get("type");
+    if (typeProperty == null || !(typeProperty.getDefault() instanceof String)) {
+      return null;
+    }
+
+    return (String) typeProperty.getDefault();
+  }
+
+  @Override
+  public void postProcessFile(File file, String fileType) {
+      return;
+  }
+
+  @Override
+  public ModelsMap postProcessModels(ModelsMap objs) {
+        // Remove "double" vars that will lead to the same php property in a model
+        // For example number and number[] will lead to the same property $number
+        // So keep the number[] var and remove the number var
+        objs = super.postProcessModels(objs);
+
+        List<ModelMap> models = objs.getModels();
+        ModelMap modelMap = models.get(0);
+        CodegenModel model = modelMap.getModel();
+
+        if (model.vendorExtensions == null) {
+            model.vendorExtensions = new HashMap<>();
+        }
+
+        model.vendorExtensions.put("x-unsuffixed-classname", unsuffixedModelClassName(model.name));
+
+        // Derive x-has-vo-type from the x-vo-type vendor extension.
+        // DefaultCodegen copies all schema extensions into vendorExtensions, so we
+        // only need to translate them into the flags used by the templates.
+        List<List<CodegenProperty>> varLists = Arrays.asList(
+            model.vars,
+            model.allVars,
+            model.requiredVars,
+            model.optionalVars,
+            model.readOnlyVars,
+            model.readWriteVars
+        );
+        for (List<CodegenProperty> varList : varLists) {
+            if (varList == null) {
+                continue;
+            }
+            for (CodegenProperty var : varList) {
+                if (var.vendorExtensions == null) {
+                    continue;
+                }
+                Object voType = var.vendorExtensions.get("x-vo-type");
+                if (voType != null) {
+                    var.vendorExtensions.put("x-has-vo-type", true);
+                }
+            }
+        }
+
+        // Simplify model var type
+        // define list of model vars to remove
+        List<CodegenProperty> varsToRemove = new ArrayList<CodegenProperty>();
+        for (Iterator<CodegenProperty> it = model.vars.iterator(); it.hasNext();) {
+            CodegenProperty var = it.next();
+            for (Iterator<CodegenProperty> it2 = model.vars.iterator(); it2.hasNext();) {
+                CodegenProperty var2 = it2.next();
+                if (var.baseName.equals(var2.baseName.concat("[]"))) {
+                    // Replace the array notation without the array.
+                    // The client adds the array twice
+                    var.baseName = var2.baseName;
+                    varsToRemove.add(var2);
+                    break;
+                }
+            }
+        }
+
+        model.vars.removeAll(varsToRemove);
+        model.allVars.removeAll(varsToRemove);
+        model.requiredVars.removeAll(varsToRemove);
+        model.optionalVars.removeAll(varsToRemove);
+        model.readOnlyVars.removeAll(varsToRemove);
+        model.readWriteVars.removeAll(varsToRemove);
+        model.parentVars.removeAll(varsToRemove);
+
+        return objs;
+  }
+
+  // Default.php ("...Default" trait, default(): self stub) and Factory.php
+  // (fromArray()/fromRecordData() via FactoryFromArray) don't apply to a value
+  // object: there's no array data to hydrate a scalar/enum from. Strip value-object
+  // models from the map only during those two dedicated passes; the plain Model/
+  // pass (which has neither key set) must still emit Model/{Name}.php for them.
+  @Override
+  public Map<String, ModelsMap> postProcessAllModels(Map<String, ModelsMap> objs) {
+    objs = super.postProcessAllModels(objs);
+
+    if (!additionalProperties.containsKey("factories") && !additionalProperties.containsKey("defaults")) {
+      return objs;
+    }
+
+    Map<String, ModelsMap> processedModels = objs;
+    Map<String, ModelsMap> filtered = new HashMap<>(objs);
+    filtered.keySet().removeIf(modelName -> {
+      List<ModelMap> models = processedModels.get(modelName).getModels();
+      if (models == null || models.isEmpty()) {
+        return false;
+      }
+
+      CodegenModel model = models.get(0).getModel();
+
+      return model != null
+          && model.vendorExtensions != null
+          && Boolean.TRUE.equals(model.vendorExtensions.get("x-is-value-object"));
+    });
+
+    return filtered;
+  }
+
+  private void resetTemplateFiles() {
+    this.supportingFiles.clear();
+    this.apiTemplateFiles.clear();
+    this.apiTestTemplateFiles.clear();
+    this.apiDocTemplateFiles.clear();
+    this.modelTestTemplateFiles.clear();
+    this.modelDocTemplateFiles.clear();
+
+    if (this.clientsMode) {
+        apiTemplateFiles.put("client.mustache", ".php");
+        apiTemplateFiles.put("clientInterface.mustache", ".php");
+        apiTemplateFiles.put("mock.mustache", ".php");
+    } else {
+        apiTemplateFiles.put("api.mustache", ".php");
+    }
+  }
+
+  @Override
+  public String toEnumDefaultValue(String value, String datatype) {
+    return value;
+  }
+
+  /**
+   * Map the generated, UPPER_SNAKE_CASE enum constant name back to the original
+   * OpenAPI value so property defaults keep the case used in the spec
+   * (e.g. "active" instead of "ACTIVE").
+   *
+   * DefaultCodegen builds the constant name and then passes it here; by looking
+   * the name up in the property's allowableValues we can recover the raw enum
+   * value and return it in the form model.mustache expects (a raw, single-quote
+   * escaped string for string enums; the plain value for numeric/boolean enums).
+   */
+  @Override
+  public String toEnumDefaultValue(CodegenProperty property, String value) {
+    if (property == null || value == null) {
+      return value;
+    }
+
+    CodegenProperty target = property.mostInnerItems != null ? property.mostInnerItems : property;
+    if (target.allowableValues == null) {
+      return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> enumVars = (List<Map<String, Object>>) target.allowableValues.get("enumVars");
+    @SuppressWarnings("unchecked")
+    List<Object> values = (List<Object>) target.allowableValues.get("values");
+    if (enumVars == null || values == null) {
+      return value;
+    }
+
+    int valueIndex = 0;
+    for (Map<String, Object> enumVar : enumVars) {
+      while (valueIndex < values.size() && values.get(valueIndex) == null) {
+        valueIndex++;
+      }
+
+      if (valueIndex >= values.size()) {
+        break;
+      }
+
+      if (value.equals(enumVar.get("name"))) {
+        Object original = values.get(valueIndex);
+        if (original != null) {
+          if (Boolean.TRUE.equals(target.isString) || isDataTypeString(target.dataType)) {
+            return original.toString().replace("'", "\\'");
+          }
+
+          return String.valueOf(original);
+        }
+      }
+
+      valueIndex++;
+    }
+
+    return value;
+  }
+
+  // A bare passthrough here (returning `value` as-is) produces invalid PHP constant
+  // names for any enum value containing characters that aren't valid in a PHP
+  // identifier (spaces, hyphens, ...), e.g. "Private VLAN" -> `public const Private VLAN`.
+  // Sanitize into UPPER_SNAKE_CASE instead, matching what a hand-written const name
+  // for that value would look like (e.g. "poweredOn" -> POWERED_ON, "Private VLAN" ->
+  // PRIVATE_VLAN). This only affects the constant *name*; toEnumValue() (not overridden
+  // here, so it keeps the base class's default) still renders the original value string.
+  @Override
+  public String toEnumVarName(String value, String datatype) {
+    if (value.isEmpty()) {
+      return "EMPTY";
+    }
+
+    // Insert an underscore at camelCase word boundaries (guestPowerOff -> guest_Power_Off)
+    // before the non-alphanumeric cleanup below, so word boundaries aren't lost once
+    // everything is uppercased.
+    String withWordBoundaries = value.replaceAll("([a-z0-9])([A-Z])", "$1_$2");
+
+    // Collapse any run of non-alphanumeric characters (spaces, hyphens, ...) into a
+    // single underscore, then trim leftover leading/trailing underscores.
+    String sanitized = withWordBoundaries.replaceAll("[^a-zA-Z0-9]+", "_")
+        .replaceAll("^_+", "")
+        .replaceAll("_+$", "");
+
+    if (sanitized.isEmpty()) {
+      return "EMPTY";
+    }
+
+    String upper = sanitized.toUpperCase(Locale.ROOT);
+
+    // A leading digit is not a valid PHP identifier start.
+    if (Character.isDigit(upper.charAt(0))) {
+      upper = "_" + upper;
+    }
+
+    return upper;
+  }
+
+  @Override
+  public boolean isDataTypeString(String dataType) {
+    return "String".equalsIgnoreCase(dataType);
+  }
+
+  @Override
+  public String toVarName(String name) {
+    if (name.matches("^\\d.*")) {
+      return "prefixNumber" + name;
+    }
+
+    if (name.matches("^@.*")) {
+      name = "_at" + name;
+    }
+
+    return super.toVarName(name);
+  }
+
+  @Override
+  public String toGetter(String name) {
+    return getterAndSetterCapitalize(name);
+  }
+
+  @Override
+  public String toSetter(String name) {
+    return getterAndSetterCapitalize(name);
+  }
+
+  @Override
+  public String toBooleanGetter(String name) {
+    return getterAndSetterCapitalize(name);
+  }
+
+  @Override
+  public String getterAndSetterCapitalize(String name) {
+    if (name == null || name.length() == 0) {
+        return name;
+    }
+    return toVarName(name);
+  }
+
+  @Override
+  public String toDefaultValue(Schema schema) {
+    if (schema.getDefault() == null) {
+      return super.toDefaultValue(schema);
+    }
+
+    if (ModelUtils.isStringSchema(schema)) {
+        // An explicit `"default": null` on a nullable string schema (e.g. Swagger 2.0's
+        // `x-nullable: true, default: null`) parses to a non-Java-null sentinel whose
+        // toString() is the literal text "null" rather than schema.getDefault() == null.
+        // Returning Java null here (rather than delegating to super, which has the same
+        // quoting behavior) tells the template there is no default, so its null-handling
+        // branch applies instead of emitting the PHP string 'null' as the default value.
+        if ("null".equals(schema.getDefault().toString())) {
+            return null;
+        }
+
+        // escape single quotes in schema.getDefault().toString()
+        return schema.getDefault().toString().replace("'", "\\'");
+    }
+
+    if (! ModelUtils.isArraySchema(schema)) {
+      return super.toDefaultValue(schema);
+    }
+
+    Object defaultValue = schema.getDefault();
+    boolean isEmpty = (defaultValue instanceof ArrayNode && ((ArrayNode) defaultValue).isEmpty())
+         || (defaultValue instanceof Collection && ((Collection<?>) defaultValue).isEmpty());
+    if (schema.getItems() != null
+         && isEmpty == false
+         && ModelUtils.isStringSchema(schema.getItems())
+    ) {
+        return defaultValue.toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
+    }
+
+    return defaultValue.toString();
+  }
+
+  // added because uploading file parameters give problems
+  @Override
+  public boolean isParameterNameUnique(CodegenParameter p, List<CodegenParameter> parameters) {
+      if (p.paramName == null) {
+          return true;
+      }
+
+      return super.isParameterNameUnique(p, parameters);
+  }
+}

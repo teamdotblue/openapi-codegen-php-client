@@ -1,0 +1,77 @@
+#!/bin/bash
+set -e
+
+argv0=$(echo "$0" | sed -e 's,\\,/,g')
+generatordir=$(dirname "$(readlink "$0" || echo "$argv0")")
+
+use_winpty=0
+
+case "$(uname -s)" in
+  *CYGWIN*) generatordir=$(cygpath -w "$basedir");;
+  MSYS*|MINGW*) use_winpty=1;;
+  Linux) generatordir=$(dirname "$(readlink -f "$0" || echo "$argv0")");;
+esac
+
+generatordir=$(cd $(dirname $argv0) > /dev/null && cd $generatordir > /dev/null && pwd)
+generatorimage=team-blue/java-openapi-codegen-php-client
+# generatordir is resolved to .../vendor/<org>/<package>/resources/dev, so climbing
+# 5 levels up from there (not from the unresolved vendor/bin invocation path) lands
+# on the consuming project's root.
+rootdir=$(cd "${generatordir}/../../../../../" && pwd)
+
+cd "${generatordir}" && DOCKER_BUILDKIT=1 docker build --target runner -t ${generatorimage} openapi-codegen-php-client
+
+# Remove per-tag client files from before they were grouped under Client/.
+rm -f "${rootdir}/Client.php" "${rootdir}/ClientInterface.php" "${rootdir}/ClientMock.php" "${rootdir}/ApiClientMock.php" "${rootdir}/AbstractClientBuilder.php"
+
+if [ -x "${rootdir}/resources/scripts/before_run.sh" ]
+then
+  "${rootdir}"/resources/scripts/before_run.sh
+fi
+
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+                                                               -i /local/resources/api/api-spec.json \
+                                                               -o /local/ \
+                                                               -c /local/resources/api/config.json \
+                                                               -t /local/resources/api/templates 1>/dev/null
+
+# Create the factories
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+                                                               -i /local/resources/api/api-spec.json \
+                                                               -o /local/ \
+                                                               -c /local/resources/api/config.json \
+                                                               -t /local/resources/api/templates \
+                                                               --additional-properties=factories=true \
+                                                               --global-property=models 1>/dev/null
+
+# Create the defaults
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+                                                               -i /local/resources/api/api-spec.json \
+                                                               -o /local/ \
+                                                               -c /local/resources/api/config.json \
+                                                               -t /local/resources/api/templates \
+                                                               --additional-properties=defaults=true \
+                                                               --global-property=models \
+                                                               --skip-overwrite 1>/dev/null
+
+# Create the per-tag clients (Client/ClientInterface/Mock split, plus AbstractClientBuilder)
+docker run --rm --user "$(id -u):$(id -g)" -v "${rootdir}":/local ${generatorimage} generate -g openapi-codegen-php-client \
+                                                               -i /local/resources/api/api-spec.json \
+                                                               -o /local/ \
+                                                               -c /local/resources/api/config.json \
+                                                               -t /local/resources/api/templates \
+                                                               --additional-properties=clients=true \
+                                                               --global-property=apis,supportingFiles 1>/dev/null
+
+# Containers now run as the host user (see --user above), so generated files are
+# already owned correctly and no sudo chown is needed.
+# Exit code of phpcbf is 1 if all is fixed https://github.com/squizlabs/PHP_CodeSniffer/issues/2898
+cd "${rootdir}" && (vendor/bin/phpcbf --extensions=php ./*.php Model/ Endpoint/ Factory/ Default/ Client/ 1> /dev/null || true)
+cd "${rootdir}" && vendor/bin/rector --no-progress-bar --output-format=json
+
+if [ -x "${rootdir}/resources/scripts/after_run.sh" ]
+then
+  "${rootdir}"/resources/scripts/after_run.sh
+fi
+
+

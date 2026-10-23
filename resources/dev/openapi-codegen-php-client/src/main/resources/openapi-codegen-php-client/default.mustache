@@ -1,0 +1,16 @@
+<?php
+{{#models}}
+declare(strict_types=1);
+
+namespace {{modelPackage}}Default;
+{{#model}}
+
+use RuntimeException;
+
+trait {{classname}}
+{
+    public static function default(): self
+    {
+        throw new RuntimeException('Default object for \'{{classname}}\' not implemented yet.');
+    }
+}{{/model}}{{/models}}

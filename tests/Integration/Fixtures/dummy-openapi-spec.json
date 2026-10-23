@@ -1,0 +1,151 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Dummy Widget API",
+        "description": "A minimal spec used only to exercise the openapi-codegen-php-client generator in tests.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/widgets": {
+            "get": {
+                "operationId": "listWidgets",
+                "tags": ["Widgets"],
+                "parameters": [
+                    {"name": "page", "in": "query", "required": false, "schema": {"type": "integer"}},
+                    {"name": "limit", "in": "query", "required": true, "schema": {"type": "integer"}}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A page of widgets.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/Widget"}
+                                }
+                            },
+                            "text/plain": {
+                                "schema": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "createWidget",
+                "tags": ["Widgets"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {"$ref": "#/components/schemas/WidgetInput"}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The created widget.",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Widget"}
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "A widget with this name already exists.",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/WidgetNameAlreadyExists"}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input, no typed schema declared for it."
+                    }
+                }
+            }
+        },
+        "/widgets/{widgetId}": {
+            "get": {
+                "operationId": "getWidget",
+                "tags": ["Widgets"],
+                "parameters": [
+                    {"name": "widgetId", "in": "path", "required": true, "schema": {"type": "string"}}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A single widget.",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Widget"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Widget": {
+                "type": "object",
+                "required": ["id", "name"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "createdAt": {"type": "string", "format": "date-time"},
+                    "status": {"type": "string", "enum": ["active", "inactive"], "default": "active"},
+                    "ownerId": {"type": "string", "x-vo-type": "TeamBlue\\ValueObjects\\Implementation\\String\\UuidValue"},
+                    "2fa": {"type": "boolean"},
+                    "@type": {"type": "string"},
+                    "networkInterface": {"$ref": "#/components/schemas/Interface"}
+                }
+            },
+            "Interface": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                    "name": {"type": "string"}
+                }
+            },
+            "WidgetInput": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "ownerId": {"type": "string", "x-vo-type": "TeamBlue\\ValueObjects\\Implementation\\String\\UuidValue"}
+                }
+            },
+            "Widget.jsonld": {
+                "type": "object",
+                "properties": {
+                    "@id": {"type": "string"}
+                }
+            },
+            "WidgetNameAlreadyExists": {
+                "type": "object",
+                "required": ["type", "title", "detail", "context", "status", "metadata"],
+                "properties": {
+                    "type": {"type": "string", "default": "/problem/widget-name-already-exists"},
+                    "title": {"type": "string", "default": "Widget name already exists"},
+                    "detail": {"type": "string", "default": "A widget named '{name}' already exists."},
+                    "context": {
+                        "type": "object",
+                        "required": ["name"],
+                        "properties": {
+                            "name": {"type": "string"}
+                        }
+                    },
+                    "status": {"type": "integer", "default": 409},
+                    "metadata": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "requestId": {"type": "string", "nullable": true}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
