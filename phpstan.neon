@@ -1,0 +1,14 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        -
+            message: '#arrayPropItemTypeMap\(\) is unused.$#'
+            path: ./tests/*
+services:
+    -
+        class: TeamBlue\JsonImmutableObjects\PhpStan\PropertiesExtension
+        tags:
+            - phpstan.properties.readWriteExtension

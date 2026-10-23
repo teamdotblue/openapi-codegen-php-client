@@ -1,0 +1,13 @@
+## Usage
+
+### Clients methods
+
+All path parameters are scalar values or shared value objects. A value object can be initialized via the `fromValue` static method.
+The query parameters and body parameters are bundled in a query and body immutable record.
+An immutable record can be initialized via the `fromArray` static method.
+All the used immutable records can be imported from this library.
+
+Method      | Description | Documentation
+------------|-------------|--------------
+{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}{{#vendorExtensions.x-add-to-documentation}}**`{{operationId}}`**| {{#summary}}{{.}}{{/summary}}{{#allParams.0}}<br/> <br/> **Parameters :** <br />{{#pathParams}}  - `{{dataType}} ${{paramName}}`{{#required}} (required) {{/required}}{{^-last}}<br /> {{/-last}}{{/pathParams}}{{#queryParams.0}}{{#pathParams.0}}<br /> {{/pathParams.0}}  - `{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}Query $query`{{/queryParams.0}}{{#bodyParams.0}}{{#pathParams.0}}<br /> {{/pathParams.0}}{{#queryParams.0}}{{^pathParams.0}}<br /> {{/pathParams.0}}{{/queryParams.0}}  - `{{bodyParams.0.baseType}} $body`{{#bodyParams.0.required}} (required) {{/bodyParams.0.required}}{{/bodyParams.0}}<br />{{/allParams.0}}{{#externalDocs}}|[Endpoint Documentation]({{url}}){{/externalDocs}}
+{{/vendorExtensions.x-add-to-documentation}}{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}

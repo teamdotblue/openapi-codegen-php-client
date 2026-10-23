@@ -1,0 +1,2 @@
+// todo update openapitools/openapi-generator to v6.4.0 => See the docker file
+// todo support jsonld and hal in the request

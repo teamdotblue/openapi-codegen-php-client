@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ruleset name="{{gitRepoId}}-client-coding-standard"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd"
+>
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
+    <arg name="cache" value=".php_cs.cache"/>
+    <arg name="colors"/>
+
+    <!--Show progress of the run and show sniff names -->
+    <arg value="ps"/>
+
+    <!-- Directories to be checked -->
+    <file>Endpoint</file>
+    <file>Model</file>
+    <file>Factory</file>
+    <file>Client</file>
+    <file>ClientBuilder.php</file>
+
+{{#internal}}
+    <rule ref="platforms-php-coding-standard">
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+        <exclude name="Generic.NamingConventions.ConstructorName.OldStyle"/>
+        <exclude name="Generic.Formatting.MultipleStatementAlignment.NotSame"/>
+        <exclude name="SlevomatCodingStandard.Classes.SuperfluousAbstractClassNaming.SuperfluousPrefix"/>
+    </rule>
+{{/internal}}
+{{^internal}}
+    <rule ref="Doctrine">
+        <exclude name="SlevomatCodingStandard.PHP.RequireExplicitAssertion.RequiredExplicitAssertion"/>
+        <exclude name="SlevomatCodingStandard.Classes.SuperfluousAbstractClassNaming.SuperfluousPrefix"/>
+        <exclude name="Generic.Formatting.MultipleStatementAlignment.NotSame"/>
+    </rule>
+{{/internal}}
+
+    <rule ref="PEAR.WhiteSpace.ObjectOperatorIndent"/>
+</ruleset>

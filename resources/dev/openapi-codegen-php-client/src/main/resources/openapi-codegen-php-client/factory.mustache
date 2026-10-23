@@ -1,0 +1,22 @@
+<?php
+{{#models}}
+declare(strict_types=1);
+
+namespace {{modelPackage}}Factory;
+{{#model}}
+use TeamBlue\JsonImmutableObjects\FactoryFromArray;
+use {{modelPackage}}Model\{{vendorExtensions.x-unsuffixed-classname}};
+
+/**
+ * @method static {{vendorExtensions.x-unsuffixed-classname}} fromArray(mixed[] $array)
+ * @method static {{vendorExtensions.x-unsuffixed-classname}} fromRecordData(mixed[] $array)
+ */
+class {{classname}}
+{
+    use FactoryFromArray;
+
+    protected static function modelClass(): string
+    {
+        return {{vendorExtensions.x-unsuffixed-classname}}::class;
+    }
+}{{/model}}{{/models}}

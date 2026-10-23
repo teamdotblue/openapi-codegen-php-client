@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.1/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         bootstrap="./vendor/autoload.php"
+         failOnRisky="true"
+         failOnWarning="true"
+         defaultTestSuite="unit"
+>
+    <php>
+        <ini name="error_reporting" value="-1" />
+    </php>
+
+    <testsuites>
+        <testsuite name="unit">
+            <directory>./tests/Unit</directory>
+        </testsuite>
+        <!-- Slow, Docker-based end-to-end test of the generator itself. Not part of the
+             default suite; run explicitly via the "composer tests:integration" script. -->
+        <testsuite name="integration">
+            <directory>./tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
+</phpunit>

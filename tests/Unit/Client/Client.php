@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+namespace TeamBlue\OpenApi\Codegen\Tests\Unit\Client;
+
+use SplFileObject;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpoint;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithArrayBody;
+use TeamBlue\OpenApi\Codegen\Tests\Unit\Endpoint\TestEndpointWithFileBody;
+use Throwable;
+
+class Client extends \TeamBlue\OpenApi\Codegen\Client\Client
+{
+    public function test(): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo'],
+                ],
+            ),
+        );
+    }
+
+    public function testWithBracketedArrayQuery(): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo', 'arrayQuery' => ['a', 'b']],
+                ],
+            ),
+        );
+    }
+
+    public function testWithExplodeArrayQuery(): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo', 'explodeQuery' => ['a', 'b']],
+                ],
+            ),
+        );
+    }
+
+    public function testWithEmptyBody(): mixed
+    {
+        return $this->performRequest(
+            TestEndpointWithArrayBody::fromArray(
+                [
+                    'idTest' => 1,
+                    'body' => [],
+                ],
+            ),
+        );
+    }
+
+    public function testWithFileBody(SplFileObject $file): mixed
+    {
+        return $this->performRequest(
+            TestEndpointWithFileBody::fromRecordData(
+                [
+                    'idTest' => 1,
+                    'body' => $file,
+                ],
+            ),
+        );
+    }
+
+    /** @param array<string, class-string<Throwable>> $exceptionMapping */
+    public function testWithExceptionMapping(array $exceptionMapping): mixed
+    {
+        return $this->performRequest(
+            TestEndpoint::fromArray(
+                [
+                    'idTest' => 1,
+                    'query' => ['testQuery' => 'ziezo'],
+                ],
+            ),
+            $exceptionMapping,
+        );
+    }
+}
